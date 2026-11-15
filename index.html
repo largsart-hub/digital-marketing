@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Marketing Operation Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Sarabun', sans-serif; }
+        textarea { resize: none; overflow: hidden; }
+
+        /* สไตล์สำหรับพิมพ์รายงาน A4 แยกเฉพาะตอนสั่ง Print */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printableReport, #printableReport * {
+                visibility: visible;
+            }
+            #printableReport {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white !important;
+                color: black !important;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-black text-slate-100 flex h-screen overflow-hidden">
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/70 z-40 hidden md:hidden" onclick="toggleMobileMenu()"></div>
+
+    <!-- Sidebar เมนูด้านข้าง (Responsive Drawer) -->
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 w-64 bg-zinc-950 border-r border-zinc-800 flex flex-col z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+        <div class="p-6 border-b border-zinc-800 flex items-center justify-between">
+            <div>
+                <h1 class="text-lg font-bold text-white tracking-wide">📊 Marketing Suite</h1>
+                <p class="text-xs text-zinc-400 mt-0.5">Operation System</p>
+            </div>
+            <button onclick="toggleMobileMenu()" class="md:hidden text-zinc-400 hover:text-white text-xl font-bold">×</button>
+        </div>
+        <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
+            <button onclick="switchTab('Dashboard'); toggleMobileMenu();" id="btn-Dashboard" class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition bg-zinc-800 text-white shadow-sm">📈 Dashboard</button>
+            <button onclick="switchTab('Tasks'); toggleMobileMenu();" id="btn-Tasks" class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition text-zinc-400 hover:bg-zinc-900 hover:text-white">📋 Tasks Management</button>
+            <button onclick="switchTab('Creator'); toggleMobileMenu();" id="btn-Creator" class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition text-zinc-400 hover:bg-zinc-900 hover:text-white">✍️ Creator Studio</button>
+            <button onclick="switchTab('AI Generator Log'); toggleMobileMenu();" id="btn-AI Generator Log" class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition text-zinc-400 hover:bg-zinc-900 hover:text-white">🤖 AI Generator Log</button>
+            <button onclick="switchTab('Promotion'); toggleMobileMenu();" id="btn-Promotion" class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition text-zinc-400 hover:bg-zinc-900 hover:text-white">🏷️ Promotion</button>
+            <button onclick="switchTab('Promotion products'); toggleMobileMenu();" id="btn-Promotion products" class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition text-zinc-400 hover:bg-zinc-900 hover:text-white">📦 Promotion products</button>
+        </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-zinc-950">
+        <!-- Header -->
+        <header class="h-20 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between px-4 md:px-8 shrink-0">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleMobileMenu()" class="md:hidden p-2 bg-zinc-800 text-zinc-300 rounded-xl hover:bg-zinc-700 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <div>
+                    <h2 id="current-tab-title" class="text-lg md:text-xl font-bold text-white truncate max-w-[180px] md:max-w-none">Dashboard</h2>
+                    <p class="text-xs text-zinc-400 hidden sm:block">ภาพรวมระบบปฏิบัติการการตลาดดิจิทัล</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 md:gap-3">
+                <button onclick="openAddModal()" id="add-btn" class="hidden px-3 md:px-4 py-2 bg-white text-zinc-950 hover:bg-zinc-200 rounded-xl text-xs md:text-sm font-semibold shadow-sm transition items-center gap-1.5">➕ <span class="hidden sm:inline">เพิ่มข้อมูลใหม่</span><span class="sm:hidden">เพิ่ม</span></button>
+                <button onclick="fetchData()" class="px-3 md:px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-xl text-xs md:text-sm font-medium transition flex items-center gap-1.5">🔄 <span class="hidden sm:inline">รีเฟรช</span></button>
+            </div>
+        </header>
+
+        <!-- Content Body -->
+        <div class="p-4 md:p-8 flex-1 overflow-y-auto">
+            <div id="loading" class="text-center py-16 text-zinc-500">กำลังโหลดข้อมูล...</div>
+            <div id="content-container"></div>
+        </div>
+    </main>
+
+    <!-- Modal เพิ่ม/แก้ไขข้อมูล -->
+    <div id="dataModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+        <div class="bg-zinc-900 rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-zinc-800 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-5 pb-3 border-b border-zinc-800">
+                <h3 id="modalTitle" class="text-lg font-bold text-white">เพิ่มข้อมูลใหม่</h3>
+                <button onclick="closeModal()" class="text-zinc-400 hover:text-white text-xl font-bold">×</button>
+            </div>
+            <form id="dataForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <div id="formFields" class="space-y-4"></div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-zinc-800">
+                    <button type="button" onclick="closeModal()" class="px-5 py-2.5 rounded-xl border border-zinc-700 text-zinc-300 text-sm font-medium hover:bg-zinc-800 transition">ยกเลิก</button>
+                    <button type="submit" id="saveBtn" class="px-5 py-2.5 rounded-xl bg-white text-zinc-950 font-semibold text-sm hover:bg-zinc-200 shadow-sm transition">บันทึกข้อมูล</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal ดูภาพรวมรายละเอียด (Detail Overview Modal) -->
+    <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+        <div class="bg-zinc-900 rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-zinc-800 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-5 pb-3 border-b border-zinc-800">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">🔍 ภาพรวมรายละเอียดข้อมูล</h3>
+                <button onclick="closeDetailModal()" class="text-zinc-400 hover:text-white text-xl font-bold">×</button>
+            </div>
+            <div id="detailContent" class="space-y-3 mb-6"></div>
+            <div class="flex flex-wrap justify-between items-center gap-2 pt-4 border-t border-zinc-800">
+                <button type="button" onclick="closeDetailModal()" class="px-3 py-2 rounded-xl border border-zinc-700 text-zinc-300 text-xs md:text-sm font-medium hover:bg-zinc-800 transition">ปิด</button>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" id="printReportBtn" class="px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs md:text-sm shadow-sm transition">🖨️ พิมพ์รายงาน A4</button>
+                    <button type="button" id="goToAiLogBtn" class="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs md:text-sm shadow-sm transition">🤖 ไปที่ AI Generator Log</button>
+                    <button type="button" id="goToCreatorBtn" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs md:text-sm shadow-sm transition">🚀 ไปที่ Creator Studio</button>
+                    <button type="button" id="detailEditBtn" class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs md:text-sm shadow-sm transition">✏️ แก้ไข</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Printable Report Container สำหรับสั่ง Print/PDF เป็นกระดาษขาว A4 -->
+    <div id="printableReport" class="hidden"></div>
+
+    <!-- Lightbox ดูรูปภาพใหญ่ -->
+    <div id="imageModal" class="fixed inset-0 bg-black/90 backdrop-blur-sm hidden items-center justify-center z-50 p-4" onclick="closeImageModal()">
+        <img id="modalImage" src="" class="max-w-[90%] max-h-[90%] rounded-xl shadow-2xl border border-zinc-700 object-contain bg-zinc-950">
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrc4208d1kHjiRE46F9QpcDOlglqroAXEcNDy7wNt0b4QpBsTkRkJeRQcnY0snlD2o/exec";
+        
+        let currentTab = "Dashboard";
+        let tableHeaders = [];
+        let tableData = [];
+        let editingRowIndex = null;
+        let chartInstance = null;
+        let promotionListCache = [];
+
+        function getThaiLabel(header) {
+            const map = {
+                'Task ID': 'รหัสงาน (Task ID)',
+                'Campaign / Project': 'แคมเปญ / โปรเจกต์ (Campaign / Project)',
+                'Task Name / Title': 'ชื่อหัวข้องาน (Task Name / Title)',
+                'Category': 'หมวดหมู่ (Category)',
+                'Platform': 'แพลตฟอร์ม (Platform)',
+                'Status': 'สถานะการทำงาน (Status)',
+                'Priority': 'ระดับความสำคัญ (Priority)',
+                'Assignee': 'ผู้รับผิดชอบ (Assignee)',
+                'Due Date': 'วันกำหนดส่ง (Due Date)',
+                'Asset / Drive Link': 'ลิงก์ไฟล์งาน / Drive (Asset / Drive Link)',
+                'Post Link': 'ลิงก์โพสต์ (Post Link)',
+                'Date': 'วันที่ (Date)',
+                'Promo Name': 'ชื่อโปรโมชั่น (Promo Name)',
+                'Conditions': 'เงื่อนไข (Conditions)',
+                'Start Date': 'วันที่เริ่มต้น (Start Date)',
+                'End Date': 'วันที่สิ้นสุด (End Date)',
+                'Images': 'รูปภาพประกอบ (Images)',
+                'Product code': 'รหัสสินค้า (Product Code)',
+                'Product Name': 'ชื่อสินค้า (Product Name)',
+                'Regular price': 'ราคาปกติ (Regular Price)',
+                'discount%': 'ส่วนลด (%) (Discount%)',
+                'promotion price': 'ราคาโปรโมชั่น (Promotion Price)',
+                'Timestamp': 'เวลาที่บันทึก (Timestamp)',
+                'Media Type': 'ประเภทสื่อ (Media Type)',
+                'Source Prompt': 'Prompt ต้นฉบับ (Source Prompt)',
+                'Generated Prompt': 'Prompt ที่สร้าง (Generated Prompt)',
+                'Result Link / Status': 'ลิงก์ผลลัพธ์ / สถานะ (Result Link)',
+                'Content Title': 'ชื่อคอนเทนต์ (Content Title)',
+                'Content Format': 'รูปแบบคอนเทนต์ (Content Format)',
+                'Hook / Script': 'ฮุก / สคริปต์ (Hook / Script)',
+                'Visual Notes': 'บันทึกภาพ (Visual Notes)'
+            };
+            return map[header] || header;
+        }
+
+        function getDropdownOptions(header) {
+            const lower = header.toLowerCase();
+            if (lower.includes('platform')) return ['TikTok', 'Facebook', 'Instagram', 'Shopee', 'YouTube', 'Line'];
+            if (lower === 'status' || (lower.includes('status') && !lower.includes('result'))) {
+                return ['To Do (ยังไม่เริ่ม)', 'In Progress (กำลังทำ)', 'Published (โพสต์แล้ว)'];
+            }
+            if (lower.includes('priority')) return ['High', 'Medium', 'Low'];
+            if (lower.includes('category')) return ['Content', 'Design', 'Ads', 'Strategy', 'Live Stream'];
+            if (lower.includes('content format') || lower.includes('media type')) return ['Shorts / Reels (คลิปสั้น)', 'Long Video (วิดีโอยาว)', 'Image Post (โพสต์รูปภาพ)', 'Carousel (อัลบั้มภาพ)'];
+            return null;
+        }
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+            document.getElementById('current-tab-title').innerText = tabName;
+            document.getElementById('add-btn').style.display = (tabName === 'Dashboard') ? 'none' : 'flex';
+
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.className = "w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition text-zinc-400 hover:bg-zinc-900 hover:text-white";
+            });
+            const activeBtn = document.getElementById(`btn-${tabName}`) || document.getElementById(`btn-${tabName.replace(/\s+/g, '-')}`);
+            if(activeBtn) {
+                activeBtn.className = "w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition bg-zinc-800 text-white shadow-sm";
+            }
+            
+            fetchData();
+        }
+
+        async function fetchData() {
+            const container = document.getElementById('content-container');
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+            container.innerHTML = '';
+
+            try {
+                const response = await fetch(`${SCRIPT_URL}?sheet=${encodeURIComponent(currentTab)}`);
+                const result = await response.json();
+                tableHeaders = result.headers || [];
+                tableData = result.data || [];
+
+                if (currentTab === 'Dashboard') {
+                    renderDashboardView();
+                } else {
+                    renderTable();
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="p-6 text-rose-400">เกิดข้อผิดพลาดในการโหลดข้อมูล: ${error.message}</div>`;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function renderDashboardView() {
+            const container = document.getElementById('content-container');
+            let totalTasks = tableData.length || 1;
+            let inProgress = 0;
+            let published = 0;
+            let tiktokCount = 0, fbCount = 0, igCount = 0, shopeeCount = 0;
+
+            tableData.forEach(row => {
+                Object.values(row).forEach(val => {
+                    if(val === 'TikTok') tiktokCount++;
+                    if(val === 'Facebook') fbCount++;
+                    if(val === 'Instagram') igCount++;
+                    if(val === 'Shopee') shopeeCount++;
+                    if(typeof val === 'string' && val.includes('To Do')) inProgress++;
+                    if(typeof val === 'string' && val.includes('Published')) published++;
+                });
+            });
+
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-lg flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-zinc-400 font-medium uppercase tracking-wider">งานทั้งหมด (Total Tasks)</p>
+                                <h3 class="text-3xl font-bold text-white mt-1">${totalTasks}</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-xl flex items-center justify-center text-xl font-bold">📋</div>
+                        </div>
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-lg flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-zinc-400 font-medium uppercase tracking-wider">กำลังทำ (In Progress)</p>
+                                <h3 class="text-3xl font-bold text-orange-400 mt-1">${inProgress || 1}</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-orange-500/10 text-orange-400 rounded-xl flex items-center justify-center text-xl font-bold">⏳</div>
+                        </div>
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-lg flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-zinc-400 font-medium uppercase tracking-wider">โพสต์แล้ว (Published)</p>
+                                <h3 class="text-3xl font-bold text-emerald-400 mt-1">${published || 0}</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center text-xl font-bold">🚀</div>
+                        </div>
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-lg flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-zinc-400 font-medium uppercase tracking-wider">แพลตฟอร์มทั้งหมด</p>
+                                <h3 class="text-3xl font-bold text-red-400 mt-1">4</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-red-500/10 text-red-400 rounded-xl flex items-center justify-center text-xl font-bold">🌐</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-lg">
+                            <h3 class="text-base font-semibold text-white mb-4">📊 สถิติงานตามแพลตฟอร์ม</h3>
+                            <div class="relative h-72 flex items-center justify-center">
+                                <canvas id="platformChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-lg">
+                            <h3 class="text-base font-semibold text-white mb-4">📈 สถานะการดำเนินงาน</h3>
+                            <div class="relative h-72 flex items-center justify-center">
+                                <canvas id="statusChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            renderCharts(tiktokCount, fbCount, igCount, shopeeCount, inProgress, published, totalTasks);
+        }
+
+        function renderCharts(tk, fb, ig, sh, inProg, pub, total) {
+            if (chartInstance) chartInstance.forEach(c => c.destroy());
+
+            const ctx1 = document.getElementById('platformChart').getContext('2d');
+            const c1 = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['TikTok', 'Facebook', 'Instagram', 'Shopee'],
+                    datasets: [{
+                        data: [tk || 2, fb || 1, ig || 1, sh || 1],
+                        backgroundColor: ['#25F4EE', '#1877F2', '#E1306C', '#EE4D2D'], 
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#d4d4d8', font: { family: 'Sarabun' } } } } }
+            });
+
+            const ctx2 = document.getElementById('statusChart').getContext('2d');
+            const c2 = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['งานทั้งหมด', 'รอดำเนินการ', 'โพสต์แล้ว'],
+                    datasets: [{
+                        label: 'จำนวนงาน (ชิ้น)',
+                        data: [total, inProg || 1, pub || 0],
+                        backgroundColor: ['#3B82F6', '#F97316', '#EF4444'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#d4d4d8', font: { family: 'Sarabun' } }, grid: { display: false } },
+                        y: { ticks: { color: '#d4d4d8', font: { family: 'Sarabun' } }, grid: { color: '#27272a' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            chartInstance = [c1, c2];
+        }
+
+        function formatShortDate(val) {
+            if (!val) return '';
+            try {
+                const d = new Date(val);
+                if (!isNaN(d.getTime())) {
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                }
+            } catch (e) {}
+            return val;
+        }
+
+        function renderTable(filteredRows = null) {
+            const container = document.getElementById('content-container');
+            if (!tableData || tableData.length === 0) {
+                container.innerHTML = `<div class="p-12 text-center text-zinc-500">ยังไม่มีข้อมูลในแท็บนี้ สามารถกดปุ่มเพิ่มข้อมูลได้เลย</div>`;
+                return;
+            }
+
+            const rowsToDisplay = filteredRows !== null ? filteredRows : tableData;
+
+            let html = `
+                <div class="space-y-4">
+                    <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex flex-wrap items-center gap-3 flex-1">
+                            <span class="text-xs text-zinc-400 font-medium">📅 กรองตามเดือน:</span>
+                            <select id="monthFilterSelect" onchange="filterTableByMonth()" class="px-3 py-1.5 bg-zinc-950 border border-zinc-700 rounded-xl text-xs text-white focus:outline-none focus:border-zinc-400">
+                                <option value="">-- ทุกเดือน (แสดงทั้งหมด) --</option>
+                                <option value="2026-11">พฤศจิกายน 2026 (2026-11)</option>
+                                <option value="2026-10">ตุลาคม 2026 (2026-10)</option>
+                                <option value="2026-09">กันยายน 2026 (2026-09)</option>
+                                <option value="2026-08">สิงหาคม 2026 (2026-08)</option>
+                                <option value="2026-07">กรกฎาคม 2026 (2026-07)</option>
+                                <option value="2026-06">มิถุนายน 2026 (2026-06)</option>
+                                <option value="2026-05">พฤษภาคม 2026 (2026-05)</option>
+                                <option value="2026-04">เมษายน 2026 (2026-04)</option>
+                                <option value="2026-03">มีนาคม 2026 (2026-03)</option>
+                                <option value="2026-02">กุมภาพันธ์ 2026 (2026-02)</option>
+                                <option value="2026-01">มกราคม 2026 (2026-01)</option>
+                            </select>
+
+                            <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+                                <input type="text" id="tableSearchInput" oninput="filterTableByMonth()" placeholder="ค้นหาเพิ่มเติม (ชื่อ, เงื่อนไข...)" class="w-full px-3 py-1.5 bg-zinc-950 border border-zinc-700 rounded-xl text-xs text-white focus:outline-none focus:border-zinc-400">
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <div class="text-xs text-zinc-300 font-semibold bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-800">
+                                📊 รวมทั้งสิ้น: <span id="summaryCount" class="text-emerald-400 font-bold">${rowsToDisplay.length}</span> รายการ
+                            </div>
+                            <button onclick="printSummaryReport()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center gap-1">
+                                🖨️ พิมพ์รายงานสรุป
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto bg-zinc-900 border border-zinc-800 rounded-2xl shadow-lg">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-zinc-950 border-b border-zinc-800 text-zinc-400 text-xs font-semibold uppercase tracking-wider">
+            `;
+            
+            tableHeaders.forEach(h => { html += `<th class="p-4">${getThaiLabel(h)}</th>`; });
+            if (currentTab !== 'Dashboard') { html += `<th class="p-4 text-right">จัดการ</th>`; }
+            html += `</tr></thead><tbody class="divide-y divide-zinc-800/60 text-sm text-zinc-300" id="tableBodyContent">`;
+
+            rowsToDisplay.forEach((row) => {
+                let originalIdx = tableData.indexOf(row);
+                html += `<tr class="hover:bg-zinc-800/40 transition cursor-pointer" onclick="openDetailModal(${originalIdx})">`;
+                tableHeaders.forEach(h => {
+                    let val = row[h] !== undefined ? row[h] : '';
+                    let lowerH = h.toLowerCase();
+                    if (lowerH.includes('image') && val) {
+                        html += `<td class="p-4" onclick="event.stopPropagation()">
+                            <div class="flex items-center gap-3">
+                                <img src="${val}" class="w-16 h-16 object-cover rounded-xl cursor-pointer border border-zinc-700 hover:opacity-80 shadow-md transition" onclick="openImageModal('${val}')" title="คลิกเพื่อดูภาพขนาดใหญ่">
+                                <span class="text-xs text-blue-400 hover:text-blue-300 cursor-pointer font-medium" onclick="openImageModal('${val}')">🔍 ดูภาพใหญ่</span>
+                            </div>
+                        </td>`;
+                    } else if (lowerH.includes('date') || lowerH.includes('timestamp')) {
+                        html += `<td class="p-4 whitespace-nowrap text-zinc-300">${formatShortDate(val)}</td>`;
+                    } else {
+                        html += `<td class="p-4 max-w-xs truncate text-zinc-300">${val}</td>`;
+                    }
+                });
+
+                if (currentTab !== 'Dashboard') {
+                    html += `<td class="p-4 text-right space-x-2 whitespace-nowrap" onclick="event.stopPropagation()">
+                        <button onclick="openEditModal(${originalIdx})" class="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-medium transition">แก้ไข</button>
+                        <button onclick="deleteRow(${row.rowIndex})" class="px-3 py-1.5 bg-zinc-800 hover:bg-rose-950 text-zinc-200 hover:text-rose-400 rounded-lg text-xs font-medium transition">ลบ</button>
+                    </td>`;
+                }
+                html += `</tr>`;
+            });
+
+            html += `</tbody></table></div></div>`;
+            container.innerHTML = html;
+        }
+
+        function filterTableByMonth() {
+            const selectedMonth = document.getElementById('monthFilterSelect')?.value || '';
+            const query = document.getElementById('tableSearchInput')?.value.toLowerCase() || '';
+
+            const filtered = tableData.filter(row => {
+                let matchMonth = true;
+                if (selectedMonth) {
+                    matchMonth = Object.entries(row).some(([key, val]) => {
+                        let lowerKey = key.toLowerCase();
+                        if (lowerKey.includes('date') || lowerKey.includes('timestamp')) {
+                            return String(val).startsWith(selectedMonth);
+                        }
+                        return false;
+                    });
+                }
+                const matchQuery = Object.values(row).some(val => String(val).toLowerCase().includes(query));
+                return matchMonth && matchQuery;
+            });
+
+            const tbody = document.getElementById('tableBodyContent');
+            const summaryCount = document.getElementById('summaryCount');
+            if(summaryCount) summaryCount.innerText = filtered.length;
+
+            let html = '';
+            filtered.forEach((row) => {
+                let originalIdx = tableData.indexOf(row);
+                html += `<tr class="hover:bg-zinc-800/40 transition cursor-pointer" onclick="openDetailModal(${originalIdx})">`;
+                tableHeaders.forEach(h => {
+                    let val = row[h] !== undefined ? row[h] : '';
+                    let lowerH = h.toLowerCase();
+                    if (lowerH.includes('image') && val) {
+                        html += `<td class="p-4" onclick="event.stopPropagation()">
+                            <div class="flex items-center gap-3">
+                                <img src="${val}" class="w-16 h-16 object-cover rounded-xl cursor-pointer border border-zinc-700 hover:opacity-80 shadow-md transition" onclick="openImageModal('${val}')" title="คลิกเพื่อดูภาพขนาดใหญ่">
+                                <span class="text-xs text-blue-400 hover:text-blue-300 cursor-pointer font-medium" onclick="openImageModal('${val}')">🔍 ดูภาพใหญ่</span>
+                            </div>
+                        </td>`;
+                    } else if (lowerH.includes('date') || lowerH.includes('timestamp')) {
+                        html += `<td class="p-4 whitespace-nowrap text-zinc-300">${formatShortDate(val)}</td>`;
+                    } else {
+                        html += `<td class="p-4 max-w-xs truncate text-zinc-300">${val}</td>`;
+                    }
+                });
+
+                if (currentTab !== 'Dashboard') {
+                    html += `<td class="p-4 text-right space-x-2 whitespace-nowrap" onclick="event.stopPropagation()">
+                        <button onclick="openEditModal(${originalIdx})" class="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-medium transition">แก้ไข</button>
+                        <button onclick="deleteRow(${row.rowIndex})" class="px-3 py-1.5 bg-zinc-800 hover:bg-rose-950 text-zinc-200 hover:text-rose-400 rounded-lg text-xs font-medium transition">ลบ</button>
+                    </td>`;
+                }
+                html += `</tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        async function openDetailModal(dataIndex) {
+            const row = tableData[dataIndex];
+            const content = document.getElementById('detailContent');
+            let html = '';
+
+            tableHeaders.forEach((h, index) => {
+                let val = row[h] !== undefined ? row[h] : '-';
+                let lowerH = h.toLowerCase();
+
+                if (lowerH.includes('image') && val) {
+                    html += `<div class="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-zinc-400 font-medium">${getThaiLabel(h)}</span>
+                            <span class="text-xs text-blue-400 hover:text-blue-300 cursor-pointer font-medium" onclick="openImageModal('${val}')">🔍 ขยายภาพเต็มจอ</span>
+                        </div>
+                        <img src="${val}" class="w-28 h-28 object-cover rounded-xl border border-zinc-700 cursor-pointer hover:opacity-90 shadow-md transition" onclick="openImageModal('${val}')" title="คลิกเพื่อขยายภาพ">
+                    </div>`;
+                } else if (lowerH.includes('prompt')) {
+                    let elementId = `detail_prompt_${index}`;
+                    html += `<div class="bg-zinc-950 p-3.5 rounded-xl border border-zinc-800 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-zinc-400 font-medium">${getThaiLabel(h)}</span>
+                            <button type="button" onclick="copyPromptText('${elementId}')" class="text-xs text-blue-400 hover:text-blue-300 font-medium">📋 คัดลอก Prompt</button>
+                        </div>
+                        <textarea id="${elementId}" rows="2" readonly class="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-white focus:outline-none resize-none">${val}</textarea>
+                    </div>`;
+                } else {
+                    if (lowerH.includes('date') || lowerH.includes('timestamp')) {
+                        val = formatShortDate(val);
+                    }
+                    html += `<div class="bg-zinc-950 p-3 rounded-xl border border-zinc-800 flex justify-between items-center gap-2">
+                        <span class="text-xs text-zinc-400 font-medium shrink-0">${getThaiLabel(h)}</span>
+                        <span class="text-sm text-white font-semibold text-right break-all">${val}</span>
+                    </div>`;
+                }
+            });
+
+            if (currentTab === 'Promotion') {
+                html += `<div class="mt-4 pt-4 border-t border-zinc-800">
+                    <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-3">📦 สินค้าที่ร่วมรายการในโปรโมชั่นนี้</h4>
+                    <div id="promoProductsContainer" class="text-xs text-zinc-400">กำลังโหลดรายการสินค้า...</div>
+                </div>`;
+            }
+
+            content.innerHTML = html;
+
+            setTimeout(() => {
+                content.querySelectorAll('textarea').forEach(ta => autoResizeTextarea(ta));
+            }, 50);
+
+            if (currentTab === 'Promotion') {
+                const promoName = row['Promo Name'] || '';
+                try {
+                    const res = await fetch(`${SCRIPT_URL}?sheet=Promotion products`);
+                    const result = await res.json();
+                    const allProducts = result.data || [];
+                    const matchedProducts = allProducts.filter(p => (p['Promo Name'] || '') === promoName);
+
+                    const prodContainer = document.getElementById('promoProductsContainer');
+                    if (prodContainer) {
+                        if (matchedProducts.length === 0) {
+                            prodContainer.innerHTML = `<p class="text-zinc-500 italic p-3 bg-zinc-950 rounded-xl border border-zinc-800 text-center">ยังไม่มีสินค้าที่ผูกกับโปรโมชั่นนี้</p>`;
+                        } else {
+                            let prodHtml = `<div class="space-y-2 max-h-60 overflow-y-auto pr-1">`;
+                            matchedProducts.forEach(prod => {
+                                prodHtml += `
+                                    <div class="bg-zinc-950 p-3 rounded-xl border border-zinc-800 flex items-center justify-between gap-3">
+                                        <div class="flex items-center gap-3">
+                                            ${prod['Images'] ? `<img src="${prod['Images']}" class="w-12 h-12 object-cover rounded-lg border border-zinc-700 cursor-pointer" onclick="openImageModal('${prod['Images']}')">` : '<div class="w-12 h-12 bg-zinc-900 rounded-lg flex items-center justify-center text-zinc-600 text-xs">ไม่มีรูป</div>'}
+                                            <div>
+                                                <p class="text-white font-semibold text-xs">${prod['Product Name'] || '-'} <span class="text-zinc-500 font-normal">(${prod['Product code'] || '-'})</span></p>
+                                                <p class="text-[11px] text-zinc-400 mt-0.5">ราคาปกติ: ${prod['Regular price'] || '-'} | ราคาโปร: <span class="text-emerald-400 font-bold">${prod['promotion price'] || '-'}</span></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                            prodHtml += `</div>`;
+                            prodContainer.innerHTML = prodHtml;
+                        }
+                    }
+                } catch (err) {
+                    const prodContainer = document.getElementById('promoProductsContainer');
+                    if (prodContainer) prodContainer.innerHTML = `<p class="text-rose-400 p-2">ไม่สามารถโหลดรายการสินค้าได้</p>`;
+                }
+            }
+
+            document.getElementById('printReportBtn').onclick = function() {
+                generatePrintableReport(row);
+            };
+            
+            document.getElementById('detailEditBtn').onclick = function() {
+                closeDetailModal();
+                openEditModal(dataIndex);
+            };
+
+            document.getElementById('goToCreatorBtn').onclick = function() {
+                proceedToCreatorStudio(row);
+            };
+
+            document.getElementById('goToAiLogBtn').onclick = function() {
+                proceedToAiGeneratorLog(row);
+            };
+
+            document.getElementById('detailModal').classList.remove('hidden');
+            document.getElementById('detailModal').classList.add('flex');
+        }
+
+        // ฟังก์ชันพิมพ์รายงาน A4 เดี่ยว พร้อมดึงรายการสินค้าที่ร่วมโปรโมชั่นมาต่อท้ายให้อัตโนมัติ
+        async function generatePrintableReport(row) {
+            const reportContainer = document.getElementById('printableReport');
+            let promoName = row['Promo Name'] || '';
+            let matchedProducts = [];
+
+            if (currentTab === 'Promotion') {
+                try {
+                    const res = await fetch(`${SCRIPT_URL}?sheet=Promotion products`);
+                    const result = await res.json();
+                    const allProducts = result.data || [];
+                    matchedProducts = allProducts.filter(p => (p['Promo Name'] || '') === promoName);
+                } catch (err) {}
+            }
+
+            let htmlContent = `
+                <div style="font-family: 'Sarabun', sans-serif; color: #000; padding: 40px; max-width: 800px; margin: 0 auto; background: #fff;">
+                    <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 12px; margin-bottom: 25px;">
+                        <h2 style="font-size: 20px; font-weight: bold; margin: 0;">รายงานสรุปข้อมูล: ${currentTab}</h2>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            `;
+
+            tableHeaders.forEach(h => {
+                let val = row[h] !== undefined ? row[h] : '-';
+                let lowerH = h.toLowerCase();
+                let thaiLbl = getThaiLabel(h);
+
+                if (lowerH.includes('date') || lowerH.includes('timestamp')) {
+                    val = formatShortDate(val);
+                }
+
+                if (lowerH.includes('image') && val) {
+                    htmlContent += `
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 10px; font-weight: bold; width: 30%; vertical-align: top; font-size: 13px;">${thaiLbl}</td>
+                            <td style="padding: 10px; vertical-align: top;"><img src="${val}" style="max-width: 120px; max-height: 120px; border-radius: 6px; border: 1px solid #ccc;"></td>
+                        </tr>
+                    `;
+                } else {
+                    htmlContent += `
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 10px; font-weight: bold; width: 30%; font-size: 13px;">${thaiLbl}</td>
+                            <td style="padding: 10px; font-size: 13px; word-break: break-all;">${val}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            htmlContent += `</table>`;
+
+            // ถ้าร้านอยู่ในหน้า Promotion และมีสินค้าในโปรนี้ ให้แนบตารางสินค้าลงในรายงานพิมพ์ด้วย
+            if (currentTab === 'Promotion' && matchedProducts.length > 0) {
+                htmlContent += `
+                    <div style="margin-top: 25px; margin-bottom: 30px;">
+                        <h3 style="font-size: 14px; font-weight: bold; border-bottom: 1px solid #444; padding-bottom: 6px; margin-bottom: 10px;">📦 รายการสินค้าที่ร่วมรายการในโปรโมชั่น (${matchedProducts.length} รายการ)</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background-color: #f1f5f9; border-bottom: 2px solid #333;">
+                                    <th style="padding: 8px; border: 1px solid #cbd5e1; font-size: 12px; text-align: left;">รหัสสินค้า</th>
+                                    <th style="padding: 8px; border: 1px solid #cbd5e1; font-size: 12px; text-align: left;">ชื่อสินค้า</th>
+                                    <th style="padding: 8px; border: 1px solid #cbd5e1; font-size: 12px; text-align: right;">ราคาปกติ</th>
+                                    <th style="padding: 8px; border: 1px solid #cbd5e1; font-size: 12px; text-align: right;">ราคาโปรโมชั่น</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                matchedProducts.forEach(prod => {
+                    htmlContent += `
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #cbd5e1; font-size: 12px;">${prod['Product code'] || '-'}</td>
+                            <td style="padding: 8px; border: 1px solid #cbd5e1; font-size: 12px;">${prod['Product Name'] || '-'}</td>
+                            <td style="padding: 8px; border: 1px solid #cbd5e1; font-size: 12px; text-align: right;">${prod['Regular price'] || '-'}</td>
+                            <td style="padding: 8px; border: 1px solid #cbd5e1; font-size: 12px; text-align: right; font-weight: bold; color: #047857;">${prod['promotion price'] || '-'}</td>
+                        </tr>
+                    `;
+                });
+                htmlContent += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            htmlContent += `
+                    <div style="display: flex; justify-content: space-between; margin-top: 50px; font-size: 13px; page-break-inside: avoid;">
+                        <div style="text-align: center;">
+                            <p>ลงชื่อ......................................................</p>
+                            <p>(ผู้จัดทำรายงาน)</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <p>ลงชื่อ......................................................</p>
+                            <p>(ผู้จัดการอนุมัติ / ตรวจสอบ)</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            reportContainer.innerHTML = htmlContent;
+            window.print();
+        }
+
+        function printSummaryReport() {
+            const selectedMonth = document.getElementById('monthFilterSelect')?.value || '';
+            const query = document.getElementById('tableSearchInput')?.value.toLowerCase() || '';
+
+            const rowsToPrint = tableData.filter(row => {
+                let matchMonth = true;
+                if (selectedMonth) {
+                    matchMonth = Object.entries(row).some(([key, val]) => {
+                        let lowerKey = key.toLowerCase();
+                        if (lowerKey.includes('date') || lowerKey.includes('timestamp')) {
+                            return String(val).startsWith(selectedMonth);
+                        }
+                        return false;
+                    });
+                }
+                const matchQuery = Object.values(row).some(val => String(val).toLowerCase().includes(query));
+                return matchMonth && matchQuery;
+            });
+
+            const reportContainer = document.getElementById('printableReport');
+            let htmlContent = `
+                <div style="font-family: 'Sarabun', sans-serif; color: #000; padding: 30px; max-width: 1000px; margin: 0 auto; background: #fff;">
+                    <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 12px; margin-bottom: 20px;">
+                        <h2 style="font-size: 22px; font-weight: bold; margin: 0;">รายงานสรุปรายการ: ${currentTab}</h2>
+                        <p style="font-size: 14px; color: #555; margin-top: 5px;">จำนวนรวมทั้งสิ้น: <b>${rowsToPrint.length}</b> รายการ (พิมพ์เมื่อ: ${new Date().toLocaleDateString('th-TH')})</p>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                        <thead>
+                            <tr style="background-color: #f1f5f9; border-bottom: 2px solid #333;">
+            `;
+
+            tableHeaders.forEach(h => {
+                htmlContent += `<th style="padding: 10px; border: 1px solid #cbd5e1; font-size: 12px; text-align: left;">${getThaiLabel(h)}</th>`;
+            });
+            htmlContent += `</tr></thead><tbody>`;
+
+            rowsToPrint.forEach(row => {
+                htmlContent += `<tr>`;
+                tableHeaders.forEach(h => {
+                    let val = row[h] !== undefined ? row[h] : '-';
+                    let lowerH = h.toLowerCase();
+
+                    if (lowerH.includes('date') || lowerH.includes('timestamp')) {
+                        val = formatShortDate(val);
+                    }
+
+                    if (lowerH.includes('image') && val) {
+                        htmlContent += `<td style="padding: 8px; border: 1px solid #cbd5e1; font-size: 12px;"><img src="${val}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"></td>`;
+                    } else {
+                        htmlContent += `<td style="padding: 8px; border: 1px solid #cbd5e1; font-size: 12px; word-break: break-all;">${val}</td>`;
+                    }
+                });
+                htmlContent += `</tr>`;
+            });
+
+            htmlContent += `
+                    </tbody>
+                </table>
+                <div style="display: flex; justify-content: space-between; margin-top: 50px; font-size: 14px; page-break-inside: avoid;">
+                    <div style="text-align: center;">
+                        <p>ลงชื่อ......................................................</p>
+                        <p>(ผู้จัดทำรายงาน)</p>
+                    </div>
+                    <div style="text-align: center;">
+                        <p>ลงชื่อ......................................................</p>
+                        <p>(ผู้จัดการอนุมัติ / ตรวจสอบ)</p>
+                    </div>
+                </div>
+            </div>
+            `;
+
+            reportContainer.innerHTML = htmlContent;
+            window.print();
+        }
+
+        async function proceedToCreatorStudio(row) {
+            closeDetailModal();
+            let statusKey = tableHeaders.find(h => h.toLowerCase().includes('status')) || 'Status';
+            let taskIdKey = tableHeaders.find(h => h.toLowerCase().includes('task id')) || 'Task ID';
+            let campaignKey = tableHeaders.find(h => h.toLowerCase().includes('campaign') || h.toLowerCase().includes('project')) || 'Campaign / Project';
+
+            row[statusKey] = 'In Progress (กำลังทำ)';
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'update', sheet: 'Tasks', row: row, rowIndex: row.rowIndex })
+                });
+            } catch (err) {}
+
+            currentTab = 'Creator';
+            document.getElementById('current-tab-title').innerText = 'Creator Studio';
+            document.getElementById('add-btn').style.display = 'flex';
+
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.className = "w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition text-zinc-400 hover:bg-zinc-900 hover:text-white";
+            });
+            const creatorBtn = document.getElementById('btn-Creator');
+            if(creatorBtn) creatorBtn.className = "w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition bg-zinc-800 text-white shadow-sm";
+
+            try {
+                const response = await fetch(`${SCRIPT_URL}?sheet=Creator`);
+                const result = await response.json();
+                tableHeaders = result.headers || [];
+                tableData = result.data || [];
+                
+                openAddModal();
+                setTimeout(() => {
+                    const taskInput = document.getElementById(`field_${tableHeaders.find(h => h.toLowerCase().includes('task id')) || 'Task ID'}`);
+                    const campaignInput = document.getElementById(`field_${tableHeaders.find(h => h.toLowerCase().includes('campaign') || h.toLowerCase().includes('project')) || 'Campaign / Project'}`);
+                    if (taskInput) taskInput.value = row[taskIdKey] || '';
+                    if (campaignInput) campaignInput.value = row[campaignKey] || '';
+                }, 100);
+            } catch (err) {
+                fetchData();
+            }
+        }
+
+        async function proceedToAiGeneratorLog(row) {
+            closeDetailModal();
+            let taskIdKey = tableHeaders.find(h => h.toLowerCase().includes('task id')) || 'Task ID';
+            let titleKey = tableHeaders.find(h => h.toLowerCase().includes('title') || h.toLowerCase().includes('name')) || 'Task Name / Title';
+            let taskTitle = row[titleKey] || row['Content Title'] || 'งานโปรโมชัน';
+
+            currentTab = 'AI Generator Log';
+            document.getElementById('current-tab-title').innerText = 'AI Generator Log';
+            document.getElementById('add-btn').style.display = 'flex';
+
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.className = "w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition text-zinc-400 hover:bg-zinc-900 hover:text-white";
+            });
+            const aiLogBtn = document.getElementById('btn-AI Generator Log');
+            if(aiLogBtn) aiLogBtn.className = "w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition bg-zinc-800 text-white shadow-sm";
+
+            try {
+                const response = await fetch(`${SCRIPT_URL}?sheet=AI Generator Log`);
+                const result = await response.json();
+                tableHeaders = result.headers || [];
+                tableData = result.data || [];
+                
+                openAddModal();
+                setTimeout(() => {
+                    const taskInput = document.getElementById(`field_${tableHeaders.find(h => h.toLowerCase().includes('task id')) || 'Task ID'}`);
+                    if (taskInput) taskInput.value = row[taskIdKey] || '';
+
+                    const timeKey = tableHeaders.find(h => h.toLowerCase().includes('timestamp') || h.toLowerCase().includes('date'));
+                    const timeInput = document.getElementById(`field_${timeKey}`);
+                    if (timeInput) {
+                        const now = new Date();
+                        timeInput.value = now.toISOString().slice(0, 16);
+                    }
+
+                    const sourcePromptKey = tableHeaders.find(h => h.toLowerCase().includes('source prompt'));
+                    const sourceInput = document.getElementById(`field_${sourcePromptKey}`);
+                    if (sourceInput) {
+                        sourceInput.value = taskTitle;
+                        autoResizeTextarea(sourceInput);
+                    }
+
+                    const modeInput = document.getElementById('prompt_mode');
+                    const ctxInput = document.getElementById('prompt_context');
+                    const actInput = document.getElementById('prompt_action');
+                    const entInput = document.getElementById('prompt_entity');
+                    const delInput = document.getElementById('prompt_delivery');
+
+                    if (modeInput) modeInput.value = 'สร้างวิดีโอ (Video Generation)';
+                    if (ctxInput) ctxInput.value = `วิดีโอสั้นเปิดตัวสินค้าใหม่บน TikTok`;
+                    if (actInput) actInput.value = `ช่างซ่อมรถ excavator กำลังซ่อมรถอยู่ ได้ยินเสียงผู้หญิงพูดว่า "เอสทีจี มาแล้วค่ะ" จึงหันมองมาที่กล้องด้วยสีหน้าตะลึง อ้าปากค้าง พร้อมมีลมพัดเข้าหน้าทำให้เส้นผมปลิว`;
+                    if (entInput) entInput.value = `มุมกล้องระยะ Medium Shot เน้นให้เห็นใบหน้า`;
+                    if (delInput) delInput.value = `ความยาว 8 วินาที, สัดส่วน 9:16, คุณภาพแบบ Cinematic, ใช้ภาพที่แนบมาสร้างเป็นวิดีโอ`;
+
+                    [ctxInput, actInput, entInput, delInput].forEach(el => { if(el) autoResizeTextarea(el); });
+
+                    updateGeneratedPrompt();
+                }, 100);
+            } catch (err) {
+                fetchData();
+            }
+        }
+
+        async function fetchPromotionList() {
+            try {
+                const res = await fetch(`${SCRIPT_URL}?sheet=Promotion`);
+                const result = await res.json();
+                if (result.data) {
+                    promotionListCache = result.data;
+                }
+            } catch (err) {
+                promotionListCache = [];
+            }
+        }
+
+        function onPromoNameChange(selectElement) {
+            const selectedName = selectElement.value;
+            const matchedPromo = promotionListCache.find(p => (p['Promo Name'] || '') === selectedName);
+
+            if (matchedPromo) {
+                tableHeaders.forEach(h => {
+                    let lowerH = h.toLowerCase();
+                    let fieldInput = document.getElementById(`field_${h}`);
+                    if (fieldInput) {
+                        if (lowerH.includes('condition') && matchedPromo[h] !== undefined) {
+                            fieldInput.value = matchedPromo[h];
+                        }
+                        if ((lowerH.includes('start date') || lowerH.includes('end date') || lowerH.includes('date')) && matchedPromo[h] !== undefined) {
+                            try {
+                                const d = new Date(matchedPromo[h]);
+                                if (!isNaN(d.getTime())) {
+                                    fieldInput.value = d.toISOString().slice(0, 16);
+                                } else {
+                                    fieldInput.value = matchedPromo[h];
+                                }
+                            } catch (e) {
+                                fieldInput.value = matchedPromo[h];
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.remove('flex');
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+
+        async function openAddModal() {
+            editingRowIndex = null;
+            document.getElementById('modalTitle').innerText = "➕ เพิ่มข้อมูลใหม่ (" + currentTab + ")";
+            if (currentTab === 'Promotion products') {
+                await fetchPromotionList();
+            }
+            buildFormFields({});
+            document.getElementById('dataModal').classList.remove('hidden');
+            document.getElementById('dataModal').classList.add('flex');
+        }
+
+        async function openEditModal(dataIndex) {
+            editingRowIndex = tableData[dataIndex].rowIndex;
+            document.getElementById('modalTitle').innerText = "✏️ แก้ไขข้อมูล";
+            if (currentTab === 'Promotion products') {
+                await fetchPromotionList();
+            }
+            buildFormFields(tableData[dataIndex]);
+            document.getElementById('dataModal').classList.remove('hidden');
+            document.getElementById('dataModal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('dataModal').classList.remove('flex');
+            document.getElementById('dataModal').classList.add('hidden');
+        }
+
+        function autoResizeTextarea(el) {
+            if (!el) return;
+            el.style.height = 'auto';
+            el.style.height = (el.scrollHeight + 4) + 'px';
+        }
+
+        function updateGeneratedPrompt() {
+            const mode = document.getElementById('prompt_mode')?.value || 'สร้างวิดีโอ (Video Generation)';
+            const ctx = document.getElementById('prompt_context')?.value || '';
+            const act = document.getElementById('prompt_action')?.value || '';
+            const ent = document.getElementById('prompt_entity')?.value || '';
+            const del = document.getElementById('prompt_delivery')?.value || '';
+
+            const combined = `[Mode: ${mode}] [Context: ${ctx}] [Action: ${act}] [Entity: ${ent}] [Delivery: ${del}]`;
+            const genPromptField = document.getElementById('real_generated_prompt_field');
+            if (genPromptField) {
+                genPromptField.value = combined;
+                autoResizeTextarea(genPromptField);
+            }
+        }
+
+        function copyPromptText(elementId) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                navigator.clipboard.writeText(el.value).then(() => {
+                    alert('📋 คัดลอก Prompt เรียบร้อยแล้ว!');
+                }).catch(err => {
+                    alert('ไม่สามารถคัดลอกได้: ' + err);
+                });
+            }
+        }
+
+        function buildFormFields(data) {
+            const container = document.getElementById('formFields');
+            let html = '';
+
+            let uniquePromoNames = [...new Set(promotionListCache.map(p => p['Promo Name'] || '').filter(Boolean))];
+
+            tableHeaders.forEach(h => {
+                let val = data[h] !== undefined ? data[h] : '';
+                let lowerH = h.toLowerCase();
+
+                if (currentTab === 'Promotion products' && lowerH.includes('promo name')) {
+                    let optionsHtml = `<option value="">-- กรุณาเลือกโปรโมชั่น --</option>`;
+                    uniquePromoNames.forEach(promo => {
+                        let selected = (val === promo) ? 'selected' : '';
+                        optionsHtml += `<option value="${promo}" ${selected}>${promo}</option>`;
+                    });
+                    html += `<div>
+                        <label class="block text-xs font-semibold text-zinc-400 mb-1">${getThaiLabel(h)}</label>
+                        <select id="field_${h}" onchange="onPromoNameChange(this)" class="w-full px-4 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-sm text-white focus:outline-none focus:border-zinc-400">${optionsHtml}</select>
+                    </div>`;
+                    return;
+                }
+
+                if (currentTab === 'AI Generator Log' && editingRowIndex === null && (lowerH.includes('generated prompt') || lowerH.includes('source prompt'))) {
+                    if (lowerH.includes('source prompt')) {
+                        if (!val) val = 'วิดีโอสั้นเปิดตัวสินค้าใหม่บน TikTok';
+                        html += `<div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-xs font-semibold text-zinc-400">${getThaiLabel(h)}</label>
+                                <button type="button" onclick="copyPromptText('field_${h}')" class="text-xs text-blue-400 hover:text-blue-300 font-medium">📋 คัดลอก Prompt</button>
+                            </div>
+                            <textarea id="field_${h}" rows="2" oninput="autoResizeTextarea(this)" class="w-full px-4 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-sm text-white focus:outline-none focus:border-zinc-400">${val}</textarea>
+                        </div>`;
+                    } else if (lowerH.includes('generated prompt')) {
+                        html += `<div class="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-3">
+                            <label class="block text-xs font-bold text-emerald-400 uppercase tracking-wider">✨ ฟอร์มสร้าง Prompt อัตโนมัติ</label>
+                            
+                            <div>
+                                <label class="block text-[11px] text-zinc-400 mb-1">0. โหมด / ประเภทการสร้าง (Mode)</label>
+                                <select id="prompt_mode" onchange="updateGeneratedPrompt()" class="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-white">
+                                    <option value="สร้างวิดีโอ (Video Generation)" selected>🎥 สร้างวิดีโอ (Video Generation)</option>
+                                    <option value="สร้างภาพ (Image Generation)">🖼️ สร้างภาพ (Image Generation)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-zinc-400 mb-1">1. บริบท (Context)</label>
+                                <textarea id="prompt_context" oninput="updateGeneratedPrompt(); autoResizeTextarea(this);" rows="1" class="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-white">วิดีโอสั้นเปิดตัวสินค้าใหม่บน TikTok</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-zinc-400 mb-1">2. คำสั่ง/การกระทำ (Action)</label>
+                                <textarea id="prompt_action" oninput="updateGeneratedPrompt(); autoResizeTextarea(this);" rows="2" class="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-white">ช่างซ่อมรถ excavator กำลังซ่อมรถอยู่ ได้ยินเสียงผู้หญิงพูดว่า "เอสทีจี มาแล้วค่ะ" จึงหันมองมาที่กล้องด้วยสีหน้าตะลึง อ้าปากค้าง พร้อมมีลมพัดเข้าหน้าทำให้เส้นผมปลิว</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-zinc-400 mb-1">3. รายละเอียด/มุมกล้อง (Entity)</label>
+                                <textarea id="prompt_entity" oninput="updateGeneratedPrompt(); autoResizeTextarea(this);" rows="1" class="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-white">มุมกล้องระยะ Medium Shot เน้นให้เห็นใบหน้า</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-zinc-400 mb-1">4. รูปแบบ/ความยาว (Delivery)</label>
+                                <textarea id="prompt_delivery" oninput="updateGeneratedPrompt(); autoResizeTextarea(this);" rows="1" class="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-white">ความยาว 8 วินาที, สัดส่วน 9:16, คุณภาพแบบ Cinematic, ใช้ภาพที่แนบมาสร้างเป็นวิดีโอ</textarea>
+                            </div>
+                        </div>`;
+
+                        let defaultGenVal = val || `[Mode: สร้างวิดีโอ (Video Generation)] [Context: วิดีโอสั้นเปิดตัวสินค้าใหม่บน TikTok] [Action: ช่างซ่อมรถ excavator กำลังซ่อมรถอยู่ ได้ยินเสียงผู้หญิงพูดว่า "เอสทีจี มาแล้วค่ะ" จึงหันมองมาที่กล้องด้วยสีหน้าตะลึง อ้าปากค้าง พร้อมมีลมพัดเข้าหน้าทำให้เส้นผมปลิว] [Entity: มุมกล้องระยะ Medium Shot เน้นให้เห็นใบหน้า] [Delivery: ความยาว 8 วินาที, สัดส่วน 9:16, คุณภาพแบบ Cinematic, ใช้ภาพที่แนบมาสร้างเป็นวิดีโอ]`;
+                        html += `<div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-xs font-semibold text-emerald-400">${getThaiLabel(h)} (ผลลัพธ์รวม)</label>
+                                <button type="button" onclick="copyPromptText('real_generated_prompt_field')" class="text-xs text-emerald-400 hover:text-emerald-300 font-medium">📋 คัดลอก Prompt</button>
+                            </div>
+                            <textarea id="real_generated_prompt_field" rows="3" oninput="autoResizeTextarea(this)" class="w-full px-4 py-2 bg-zinc-950 border border-emerald-600/50 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-400">${defaultGenVal}</textarea>
+                            <input type="hidden" id="field_${h}" value="${defaultGenVal}">
+                        </div>`;
+                    }
+                    return;
+                }
+
+                let thaiLabel = getThaiLabel(h);
+                let dropdownOptions = getDropdownOptions(h);
+                
+                if (lowerH.includes('image')) {
+                    html += `<div>
+                        <label class="block text-xs font-semibold text-zinc-400 mb-1">${thaiLabel} (เลือกรูปภาพ)</label>
+                        <input type="file" id="field_${h}" accept="image/*" class="w-full text-sm text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-zinc-200 hover:file:bg-zinc-700 border border-zinc-700 rounded-xl p-1 bg-zinc-950">
+                        <input type="hidden" id="val_${h}" value="${val}">
+                        ${val ? `<div class="mt-2 flex items-center gap-2"><img src="${val}" class="w-16 h-16 object-cover rounded-xl border border-zinc-700"><span class="text-xs text-zinc-500">มีรูปภาพเดิมอยู่แล้ว</span></div>` : ''}
+                    </div>`;
+                } else if (lowerH.includes('date') || lowerH.includes('timestamp')) {
+                    let formattedDate = '';
+                    if (val) {
+                        try {
+                            const d = new Date(val);
+                            if (!isNaN(d.getTime())) formattedDate = d.toISOString().slice(0, 16);
+                        } catch (e) { formattedDate = val; }
+                    } else if (currentTab === 'AI Generator Log' && editingRowIndex === null && lowerH.includes('timestamp')) {
+                        formattedDate = new Date().toISOString().slice(0, 16);
+                    }
+                    html += `<div>
+                        <label class="block text-xs font-semibold text-zinc-400 mb-1">${thaiLabel}</label>
+                        <input type="datetime-local" id="field_${h}" value="${formattedDate}" class="w-full px-4 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-sm text-white focus:outline-none focus:border-zinc-400">
+                    </div>`;
+                } else if (dropdownOptions) {
+                    let optionsHtml = `<option value="">-- กรุณาเลือก --</option>`;
+                    dropdownOptions.forEach(opt => {
+                        let selected = (val === opt) ? 'selected' : '';
+                        optionsHtml += `<option value="${opt}" ${selected}>${opt}</option>`;
+                    });
+                    html += `<div>
+                        <label class="block text-xs font-semibold text-zinc-400 mb-1">${thaiLabel}</label>
+                        <select id="field_${h}" class="w-full px-4 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-sm text-white focus:outline-none focus:border-zinc-400">${optionsHtml}</select>
+                    </div>`;
+                } else if (lowerH.includes('prompt')) {
+                    html += `<div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-xs font-semibold text-zinc-400">${thaiLabel}</label>
+                            <button type="button" onclick="copyPromptText('field_${h}')" class="text-xs text-blue-400 hover:text-blue-300 font-medium">📋 คัดลอก Prompt</button>
+                        </div>
+                        <textarea id="field_${h}" rows="3" oninput="autoResizeTextarea(this)" class="w-full px-4 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-sm text-white focus:outline-none focus:border-zinc-400">${val}</textarea>
+                    </div>`;
+                } else {
+                    html += `<div>
+                        <label class="block text-xs font-semibold text-zinc-400 mb-1">${thaiLabel}</label>
+                        <input type="text" id="field_${h}" value="${val}" class="w-full px-4 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-sm text-white focus:outline-none focus:border-zinc-400">
+                    </div>`;
+                }
+            });
+            container.innerHTML = html;
+
+            setTimeout(() => {
+                container.querySelectorAll('textarea').forEach(ta => autoResizeTextarea(ta));
+            }, 50);
+        }
+
+        function compressAndResizeImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = event => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        let width = img.width, height = img.height;
+                        const MAX_SIZE = 300;
+                        if (width > height) {
+                            if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
+                        } else {
+                            if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.5));
+                    };
+                    img.onerror = error => reject(error);
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.innerText = "กำลังบันทึก...";
+            saveBtn.disabled = true;
+
+            try {
+                const genPromptField = document.getElementById('real_generated_prompt_field');
+                const mainField = tableHeaders.find(h => h.toLowerCase().includes('generated prompt'));
+                if (genPromptField && mainField) {
+                    const hiddenMain = document.getElementById(`field_${mainField}`);
+                    if (hiddenMain) hiddenMain.value = genPromptField.value;
+                }
+
+                const rowData = {};
+                for (let h of tableHeaders) {
+                    if (h.toLowerCase().includes('image')) {
+                        const fileInput = document.getElementById(`field_${h}`);
+                        const hiddenVal = document.getElementById(`val_${h}`).value;
+                        if (fileInput && fileInput.files.length > 0) {
+                            rowData[h] = await compressAndResizeImage(fileInput.files[0]);
+                        } else {
+                            rowData[h] = hiddenVal;
+                        }
+                    } else {
+                        const el = document.getElementById(`field_${h}`);
+                        rowData[h] = el ? el.value : '';
+                    }
+                }
+
+                const action = editingRowIndex === null ? 'add' : 'update';
+                const payload = { action: action, sheet: currentTab, row: rowData, rowIndex: editingRowIndex };
+
+                const res = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                
+                if (result.status === 'success') {
+                    closeModal();
+                    fetchData();
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + result.message);
+                }
+            } catch (err) {
+                alert('ไม่สามารถบันทึกข้อมูลได้: ' + err.message);
+            } finally {
+                saveBtn.innerText = "บันทึกข้อมูล";
+                saveBtn.disabled = false;
+            }
+        }
+
+        async function deleteRow(rowIndex) {
+            if (!confirm('คุณต้องการลบข้อมูลแถวนี้ใช่หรือไม่?')) return;
+            try {
+                const res = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'delete', sheet: currentTab, rowIndex: rowIndex })
+                });
+                const result = await res.json();
+                if (result.status === 'success') fetchData();
+                else alert('ลบไม่สำเร็จ: ' + result.message);
+            } catch (err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        }
+
+        function openImageModal(url) {
+            document.getElementById('modalImage').src = url;
+            document.getElementById('imageModal').classList.remove('hidden');
+            document.getElementById('imageModal').classList.add('flex');
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.remove('flex');
+            document.getElementById('imageModal').classList.add('hidden');
+        }
+
+        fetchData();
+    </script>
+</body>
+</html>
