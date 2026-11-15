@@ -6,21 +6,15 @@
     <title>Digital Marketing Operation Suite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- เพิ่ม Chart.js DataLabels Plugin สำหรับแสดงตัวเลขบนกราฟ -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Sarabun', sans-serif; }
         textarea { resize: none; overflow: hidden; }
 
-        /* สไตล์สำหรับพิมพ์รายงาน A4 แยกเฉพาะตอนสั่ง Print */
         @media print {
-            body * {
-                visibility: hidden;
-            }
-            #printableReport, #printableReport * {
-                visibility: visible;
-            }
+            body * { visibility: hidden; }
+            #printableReport, #printableReport * { visibility: visible; }
             #printableReport {
                 display: block !important;
                 position: absolute;
@@ -39,7 +33,7 @@
     <!-- Mobile Sidebar Overlay -->
     <div id="sidebarOverlay" class="fixed inset-0 bg-black/70 z-40 hidden md:hidden" onclick="toggleMobileMenu()"></div>
 
-    <!-- Sidebar เมนูด้านข้าง (Responsive Drawer) -->
+    <!-- Sidebar เมนูด้านข้าง -->
     <aside id="sidebar" class="fixed md:static inset-y-0 left-0 w-64 bg-zinc-950 border-r border-zinc-800 flex flex-col z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
         <div class="p-6 border-b border-zinc-800 flex items-center justify-between">
             <div>
@@ -101,7 +95,7 @@
         </div>
     </div>
 
-    <!-- Modal ดูภาพรวมรายละเอียด (Detail Overview Modal) -->
+    <!-- Modal ดูรายละเอียดพร้อมปุ่มนำทาง -->
     <div id="detailModal" class="fixed inset-0 bg-black/80 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
         <div class="bg-zinc-900 rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-zinc-800 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-5 pb-3 border-b border-zinc-800">
@@ -121,10 +115,10 @@
         </div>
     </div>
 
-    <!-- Hidden Printable Report Container สำหรับสั่ง Print/PDF เป็นกระดาษขาว A4 -->
+    <!-- Hidden Printable Report Container -->
     <div id="printableReport" class="hidden"></div>
 
-    <!-- Lightbox ดูรูปภาพใหญ่ -->
+    <!-- Lightbox -->
     <div id="imageModal" class="fixed inset-0 bg-black/90 backdrop-blur-sm hidden items-center justify-center z-50 p-4" onclick="closeImageModal()">
         <img id="modalImage" src="" class="max-w-[90%] max-h-[90%] rounded-xl shadow-2xl border border-zinc-700 object-contain bg-zinc-950">
     </div>
@@ -178,7 +172,7 @@
 
         function getDropdownOptions(header) {
             const lower = header.toLowerCase();
-            if (lower.includes('platform')) return ['TikTok', 'Facebook', 'Instagram', 'Shopee', 'YouTube', 'Line'];
+            if (lower.includes('platform')) return ['Facebook', 'Line OA', 'TikTok', 'YouTube', 'Instagram', 'Shopee'];
             if (lower === 'status' || (lower.includes('status') && !lower.includes('result'))) {
                 return ['To Do (ยังไม่เริ่ม)', 'In Progress (กำลังทำ)', 'Published (โพสต์แล้ว)'];
             }
@@ -243,7 +237,6 @@
             let inProgress = Number(summary['กำลังทำ (In Progress)'] || 0);
             let published = Number(summary['โพสต์แล้ว (Published)'] || 0);
             
-            // เปลี่ยนชื่อตัวแปรและคีย์ให้ตรงกับแพลตฟอร์มใหม่
             let fbCount = Number(summary['Facebook'] || 0);
             let lineCount = Number(summary['Line OA'] || 0);
             let tiktokCount = Number(summary['TikTok'] || 0);
@@ -251,6 +244,16 @@
 
             container.innerHTML = `
                 <div class="space-y-6">
+                    <!-- ปุ่มพิมพ์หน้า Dashboard -->
+                    <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 flex items-center justify-between">
+                        <div class="text-xs text-zinc-400">
+                            📊 ภาพรวมสถิติระบบปฏิบัติการการตลาดดิจิทัล
+                        </div>
+                        <button onclick="printDashboardReport(${totalTasks}, ${inProgress}, ${published}, ${fbCount}, ${lineCount}, ${tiktokCount}, ${ytCount})" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5">
+                            🖨️ พิมพ์รายงาน Dashboard
+                        </button>
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-lg flex items-center justify-between">
                             <div>
@@ -302,10 +305,53 @@
             renderCharts(fbCount, lineCount, tiktokCount, ytCount, inProgress, published, totalTasks);
         }
 
+        function printDashboardReport(total, inProg, pub, fb, line, tk, yt) {
+            const reportContainer = document.getElementById('printableReport');
+            let htmlContent = `
+                <div style="font-family: 'Sarabun', sans-serif; color: #000; padding: 40px; max-width: 800px; margin: 0 auto; background: #fff;">
+                    <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 12px; margin-bottom: 25px;">
+                        <h2 style="font-size: 22px; font-weight: bold; margin: 0;">รายงานสรุปภาพรวมระบบ (Dashboard Summary)</h2>
+                        <p style="font-size: 13px; color: #555; margin-top: 5px;">พิมพ์เมื่อ: ${new Date().toLocaleDateString('th-TH')} เวลา ${new Date().toLocaleTimeString('th-TH')}</p>
+                    </div>
+
+                    <div style="margin-bottom: 25px;">
+                        <h3 style="font-size: 15px; font-weight: bold; border-bottom: 1px solid #444; padding-bottom: 6px; margin-bottom: 10px;">📈 สถิติงานภาพรวม</h3>
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+                            <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px; font-weight: bold;">งานทั้งหมด (Total Tasks)</td><td style="padding: 8px; text-align: right; font-weight: bold;">${total} งาน</td></tr>
+                            <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px; font-weight: bold;">กำลังทำ (In Progress)</td><td style="padding: 8px; text-align: right; color: #d97706; font-weight: bold;">${inProg} งาน</td></tr>
+                            <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px; font-weight: bold;">โพสต์แล้ว (Published)</td><td style="padding: 8px; text-align: right; color: #059669; font-weight: bold;">${pub} งาน</td></tr>
+                        </table>
+                    </div>
+
+                    <div style="margin-bottom: 30px;">
+                        <h3 style="font-size: 15px; font-weight: bold; border-bottom: 1px solid #444; padding-bottom: 6px; margin-bottom: 10px;">🌐 สถิติงานตามแพลตฟอร์ม</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px;">Facebook</td><td style="padding: 8px; text-align: right; font-weight: bold;">${fb} งาน</td></tr>
+                            <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px;">Line OA</td><td style="padding: 8px; text-align: right; font-weight: bold;">${line} งาน</td></tr>
+                            <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px;">TikTok</td><td style="padding: 8px; text-align: right; font-weight: bold;">${tk} งาน</td></tr>
+                            <tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px;">YouTube</td><td style="padding: 8px; text-align: right; font-weight: bold;">${yt} งาน</td></tr>
+                        </table>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 60px; font-size: 13px; page-break-inside: avoid;">
+                        <div style="text-align: center;">
+                            <p>ลงชื่อ......................................................</p>
+                            <p>(ผู้จัดทำรายงาน)</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <p>ลงชื่อ......................................................</p>
+                            <p>(ผู้จัดการอนุมัติ / ตรวจสอบ)</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            reportContainer.innerHTML = htmlContent;
+            window.print();
+        }
+
         function renderCharts(fb, line, tk, yt, inProg, pub, total) {
             if (chartInstance) chartInstance.forEach(c => c.destroy());
 
-            // 1. กราฟโดนัท ปรับป้ายชื่อเป็น Facebook, Line OA, TikTok, YouTube พร้อมกำหนดสีประจำแพลตฟอร์ม
             const ctx1 = document.getElementById('platformChart').getContext('2d');
             const c1 = new Chart(ctx1, {
                 type: 'doughnut',
@@ -313,7 +359,7 @@
                     labels: ['Facebook', 'Line OA', 'TikTok', 'YouTube'],
                     datasets: [{
                         data: [fb, line, tk, yt],
-                        backgroundColor: ['#1877F2', '#06C755', '#25F4EE', '#FF0000'], // สีฟ้า(FB), สีเขียว(Line), สีฟ้าอ่อน(TikTok), สีแดง(YouTube)
+                        backgroundColor: ['#1877F2', '#06C755', '#25F4EE', '#FF0000'], 
                         borderWidth: 0
                     }]
                 },
@@ -332,7 +378,6 @@
                 plugins: [ChartDataLabels]
             });
 
-            // 2. กราฟแท่ง (สถานะการดำเนินงาน)
             const ctx2 = document.getElementById('statusChart').getContext('2d');
             const c2 = new Chart(ctx2, {
                 type: 'bar',
@@ -349,18 +394,10 @@
                     responsive: true, 
                     maintainAspectRatio: false,
                     scales: {
-                        x: { 
-                            ticks: { color: '#d4d4d8', font: { family: 'Sarabun' } }, 
-                            grid: { display: false } 
-                        },
+                        x: { ticks: { color: '#d4d4d8', font: { family: 'Sarabun' } }, grid: { display: false } },
                         y: { 
                             beginAtZero: true,
-                            ticks: { 
-                                color: '#d4d4d8', 
-                                font: { family: 'Sarabun' },
-                                stepSize: 1,
-                                precision: 0
-                            }, 
+                            ticks: { color: '#d4d4d8', font: { family: 'Sarabun' }, stepSize: 1, precision: 0 }, 
                             grid: { color: '#27272a' } 
                         }
                     },
@@ -392,6 +429,86 @@
             return val;
         }
 
+        function renderCardsHtml(rows) {
+            if (!rows || rows.length === 0) {
+                return `<div class="p-12 text-center text-zinc-500">ไม่พบรายการข้อมูล</div>`;
+            }
+            let html = '';
+            rows.forEach((row) => {
+                let originalIdx = tableData.indexOf(row);
+                let titleVal = '';
+                let idVal = '';
+                let statusVal = '';
+                let imageVal = '';
+
+                tableHeaders.forEach(h => {
+                    let val = row[h] !== undefined ? row[h] : '';
+                    let lowerH = h.toLowerCase();
+                    if (lowerH.includes('title') || lowerH.includes('name') || lowerH.includes('promo name')) {
+                        if (!titleVal) titleVal = val;
+                    }
+                    if (lowerH.includes('id') || lowerH.includes('code')) {
+                        if (!idVal) idVal = val;
+                    }
+                    if (lowerH.includes('status')) {
+                        if (!statusVal) statusVal = val;
+                    }
+                    if (lowerH.includes('image') && val && !imageVal) {
+                        imageVal = val;
+                    }
+                });
+
+                if (!titleVal) {
+                    const firstKey = tableHeaders.find(h => !h.toLowerCase().includes('id'));
+                    titleVal = firstKey ? row[firstKey] : 'รายการ';
+                }
+
+                html += `
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 shadow-md hover:border-zinc-700 transition cursor-pointer flex flex-col gap-3" onclick="openDetailModal(${originalIdx})">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                ${imageVal ? `<img src="${imageVal}" class="w-12 h-12 object-cover rounded-xl border border-zinc-700 shrink-0">` : ''}
+                                <div>
+                                    ${idVal ? `<span class="text-[10px] text-zinc-500 font-mono">${idVal}</span>` : ''}
+                                    <h4 class="text-sm font-bold text-white line-clamp-1">${titleVal}</h4>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
+                                ${statusVal ? `<span class="px-2 py-1 bg-zinc-800 text-zinc-300 rounded-lg text-[10px] font-medium">${statusVal}</span>` : ''}
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-zinc-800/60 text-xs text-zinc-400">
+                `;
+
+                let count = 0;
+                tableHeaders.forEach(h => {
+                    let lowerH = h.toLowerCase();
+                    if (count < 3 && !lowerH.includes('image') && !lowerH.includes('title') && !lowerH.includes('name') && !lowerH.includes('id')) {
+                        let val = row[h] !== undefined ? row[h] : '';
+                        if (lowerH.includes('date') || lowerH.includes('timestamp')) val = formatShortDate(val);
+                        if (val) {
+                            count++;
+                            html += `<div><span class="text-zinc-600 block text-[10px]">${getThaiLabel(h)}</span><span class="text-zinc-300 truncate block">${val}</span></div>`;
+                        }
+                    }
+                });
+
+                html += `
+                        </div>
+
+                        ${currentTab !== 'Dashboard' ? `
+                            <div class="flex justify-end gap-2 pt-2 border-t border-zinc-800/40" onclick="event.stopPropagation()">
+                                <button onclick="openEditModal(${originalIdx})" class="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-medium transition">แก้ไข</button>
+                                <button onclick="deleteRow(${row.rowIndex})" class="px-3 py-1 bg-zinc-800 hover:bg-rose-950 text-zinc-200 hover:text-rose-400 rounded-lg text-xs font-medium transition">ลบ</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            return html;
+        }
+
         function renderTable(filteredRows = null) {
             const container = document.getElementById('content-container');
             if (!tableData || tableData.length === 0) {
@@ -403,10 +520,10 @@
 
             let html = `
                 <div class="space-y-4">
-                    <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 flex flex-wrap items-center justify-between gap-4">
-                        <div class="flex flex-wrap items-center gap-3 flex-1">
+                    <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
                             <span class="text-xs text-zinc-400 font-medium">📅 กรองตามเดือน:</span>
-                            <select id="monthFilterSelect" onchange="filterTableByMonth()" class="px-3 py-1.5 bg-zinc-950 border border-zinc-700 rounded-xl text-xs text-white focus:outline-none focus:border-zinc-400">
+                            <select id="monthFilterSelect" onchange="filterTableByMonth()" class="px-3 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-xs text-white focus:outline-none focus:border-zinc-400">
                                 <option value="">-- ทุกเดือน (แสดงทั้งหมด) --</option>
                                 <option value="2026-11">พฤศจิกายน 2026 (2026-11)</option>
                                 <option value="2026-10">ตุลาคม 2026 (2026-10)</option>
@@ -421,61 +538,26 @@
                                 <option value="2026-01">มกราคม 2026 (2026-01)</option>
                             </select>
 
-                            <div class="flex items-center gap-2 flex-1 min-w-[200px]">
-                                <input type="text" id="tableSearchInput" oninput="filterTableByMonth()" placeholder="ค้นหาเพิ่มเติม (ชื่อ, เงื่อนไข...)" class="w-full px-3 py-1.5 bg-zinc-950 border border-zinc-700 rounded-xl text-xs text-white focus:outline-none focus:border-zinc-400">
+                            <div class="flex items-center gap-2 flex-1">
+                                <input type="text" id="tableSearchInput" oninput="filterTableByMonth()" placeholder="ค้นหาเพิ่มเติม..." class="w-full px-3 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-xs text-white focus:outline-none focus:border-zinc-400">
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-3">
-                            <div class="text-xs text-zinc-300 font-semibold bg-zinc-950 px-3 py-1.5 rounded-xl border border-zinc-800">
-                                📊 รวมทั้งสิ้น: <span id="summaryCount" class="text-emerald-400 font-bold">${rowsToDisplay.length}</span> รายการ
+                        <div class="flex items-center justify-between sm:justify-end gap-3">
+                            <div class="text-xs text-zinc-300 font-semibold bg-zinc-950 px-3 py-2 rounded-xl border border-zinc-800">
+                                📊 รวม: <span id="summaryCount" class="text-emerald-400 font-bold">${rowsToDisplay.length}</span> รายการ
                             </div>
-                            <button onclick="printSummaryReport()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center gap-1">
+                            <button onclick="printSummaryReport()" class="px-3 py-2 bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs rounded-xl shadow-sm transition flex items-center gap-1">
                                 🖨️ พิมพ์รายงานสรุป
                             </button>
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto bg-zinc-900 border border-zinc-800 rounded-2xl shadow-lg">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-zinc-950 border-b border-zinc-800 text-zinc-400 text-xs font-semibold uppercase tracking-wider">
+                    <div id="tableBodyContent" class="space-y-3">
+                        ${renderCardsHtml(rowsToDisplay)}
+                    </div>
+                </div>
             `;
-            
-            tableHeaders.forEach(h => { html += `<th class="p-4">${getThaiLabel(h)}</th>`; });
-            if (currentTab !== 'Dashboard') { html += `<th class="p-4 text-right">จัดการ</th>`; }
-            html += `</tr></thead><tbody class="divide-y divide-zinc-800/60 text-sm text-zinc-300" id="tableBodyContent">`;
-
-            rowsToDisplay.forEach((row) => {
-                let originalIdx = tableData.indexOf(row);
-                html += `<tr class="hover:bg-zinc-800/40 transition cursor-pointer" onclick="openDetailModal(${originalIdx})">`;
-                tableHeaders.forEach(h => {
-                    let val = row[h] !== undefined ? row[h] : '';
-                    let lowerH = h.toLowerCase();
-                    if (lowerH.includes('image') && val) {
-                        html += `<td class="p-4" onclick="event.stopPropagation()">
-                            <div class="flex items-center gap-3">
-                                <img src="${val}" class="w-16 h-16 object-cover rounded-xl cursor-pointer border border-zinc-700 hover:opacity-80 shadow-md transition" onclick="openImageModal('${val}')" title="คลิกเพื่อดูภาพขนาดใหญ่">
-                                <span class="text-xs text-blue-400 hover:text-blue-300 cursor-pointer font-medium" onclick="openImageModal('${val}')">🔍 ดูภาพใหญ่</span>
-                            </div>
-                        </td>`;
-                    } else if (lowerH.includes('date') || lowerH.includes('timestamp')) {
-                        html += `<td class="p-4 whitespace-nowrap text-zinc-300">${formatShortDate(val)}</td>`;
-                    } else {
-                        html += `<td class="p-4 max-w-xs truncate text-zinc-300">${val}</td>`;
-                    }
-                });
-
-                if (currentTab !== 'Dashboard') {
-                    html += `<td class="p-4 text-right space-x-2 whitespace-nowrap" onclick="event.stopPropagation()">
-                        <button onclick="openEditModal(${originalIdx})" class="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-medium transition">แก้ไข</button>
-                        <button onclick="deleteRow(${row.rowIndex})" class="px-3 py-1.5 bg-zinc-800 hover:bg-rose-950 text-zinc-200 hover:text-rose-400 rounded-lg text-xs font-medium transition">ลบ</button>
-                    </td>`;
-                }
-                html += `</tr>`;
-            });
-
-            html += `</tbody></table></div></div>`;
             container.innerHTML = html;
         }
 
@@ -501,37 +583,7 @@
             const tbody = document.getElementById('tableBodyContent');
             const summaryCount = document.getElementById('summaryCount');
             if(summaryCount) summaryCount.innerText = filtered.length;
-
-            let html = '';
-            filtered.forEach((row) => {
-                let originalIdx = tableData.indexOf(row);
-                html += `<tr class="hover:bg-zinc-800/40 transition cursor-pointer" onclick="openDetailModal(${originalIdx})">`;
-                tableHeaders.forEach(h => {
-                    let val = row[h] !== undefined ? row[h] : '';
-                    let lowerH = h.toLowerCase();
-                    if (lowerH.includes('image') && val) {
-                        html += `<td class="p-4" onclick="event.stopPropagation()">
-                            <div class="flex items-center gap-3">
-                                <img src="${val}" class="w-16 h-16 object-cover rounded-xl cursor-pointer border border-zinc-700 hover:opacity-80 shadow-md transition" onclick="openImageModal('${val}')" title="คลิกเพื่อดูภาพขนาดใหญ่">
-                                <span class="text-xs text-blue-400 hover:text-blue-300 cursor-pointer font-medium" onclick="openImageModal('${val}')">🔍 ดูภาพใหญ่</span>
-                            </div>
-                        </td>`;
-                    } else if (lowerH.includes('date') || lowerH.includes('timestamp')) {
-                        html += `<td class="p-4 whitespace-nowrap text-zinc-300">${formatShortDate(val)}</td>`;
-                    } else {
-                        html += `<td class="p-4 max-w-xs truncate text-zinc-300">${val}</td>`;
-                    }
-                });
-
-                if (currentTab !== 'Dashboard') {
-                    html += `<td class="p-4 text-right space-x-2 whitespace-nowrap" onclick="event.stopPropagation()">
-                        <button onclick="openEditModal(${originalIdx})" class="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-medium transition">แก้ไข</button>
-                        <button onclick="deleteRow(${row.rowIndex})" class="px-3 py-1.5 bg-zinc-800 hover:bg-rose-950 text-zinc-200 hover:text-rose-400 rounded-lg text-xs font-medium transition">ลบ</button>
-                    </td>`;
-                }
-                html += `</tr>`;
-            });
-            tbody.innerHTML = html;
+            if(tbody) tbody.innerHTML = renderCardsHtml(filtered);
         }
 
         async function openDetailModal(dataIndex) {
@@ -549,7 +601,7 @@
                             <span class="text-xs text-zinc-400 font-medium">${getThaiLabel(h)}</span>
                             <span class="text-xs text-blue-400 hover:text-blue-300 cursor-pointer font-medium" onclick="openImageModal('${val}')">🔍 ขยายภาพเต็มจอ</span>
                         </div>
-                        <img src="${val}" class="w-28 h-28 object-cover rounded-xl border border-zinc-700 cursor-pointer hover:opacity-90 shadow-md transition" onclick="openImageModal('${val}')" title="คลิกเพื่อขยายภาพ">
+                        <img src="${val}" class="w-28 h-28 object-cover rounded-xl border border-zinc-700 cursor-pointer hover:opacity-90 shadow-md transition" onclick="openImageModal('${val}')">
                     </div>`;
                 } else if (lowerH.includes('prompt')) {
                     let elementId = `detail_prompt_${index}`;
@@ -561,9 +613,7 @@
                         <textarea id="${elementId}" rows="2" readonly class="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-white focus:outline-none resize-none">${val}</textarea>
                     </div>`;
                 } else {
-                    if (lowerH.includes('date') || lowerH.includes('timestamp')) {
-                        val = formatShortDate(val);
-                    }
+                    if (lowerH.includes('date') || lowerH.includes('timestamp')) val = formatShortDate(val);
                     html += `<div class="bg-zinc-950 p-3 rounded-xl border border-zinc-800 flex justify-between items-center gap-2">
                         <span class="text-xs text-zinc-400 font-medium shrink-0">${getThaiLabel(h)}</span>
                         <span class="text-sm text-white font-semibold text-right break-all">${val}</span>
@@ -579,10 +629,7 @@
             }
 
             content.innerHTML = html;
-
-            setTimeout(() => {
-                content.querySelectorAll('textarea').forEach(ta => autoResizeTextarea(ta));
-            }, 50);
+            setTimeout(() => { content.querySelectorAll('textarea').forEach(ta => autoResizeTextarea(ta)); }, 50);
 
             if (currentTab === 'Promotion') {
                 const promoName = row['Promo Name'] || '';
@@ -591,7 +638,6 @@
                     const result = await res.json();
                     const allProducts = result.data || [];
                     const matchedProducts = allProducts.filter(p => (p['Promo Name'] || '') === promoName);
-
                     const prodContainer = document.getElementById('promoProductsContainer');
                     if (prodContainer) {
                         if (matchedProducts.length === 0) {
@@ -621,38 +667,24 @@
                 }
             }
 
-            document.getElementById('printReportBtn').onclick = function() {
-                generatePrintableReport(row);
-            };
-            
-            document.getElementById('detailEditBtn').onclick = function() {
-                closeDetailModal();
-                openEditModal(dataIndex);
-            };
-
-            document.getElementById('goToCreatorBtn').onclick = function() {
-                proceedToCreatorStudio(row);
-            };
-
-            document.getElementById('goToAiLogBtn').onclick = function() {
-                proceedToAiGeneratorLog(row);
-            };
+            document.getElementById('printReportBtn').onclick = () => generateItemPrintableReport(row);
+            document.getElementById('detailEditBtn').onclick = () => { closeDetailModal(); openEditModal(dataIndex); };
+            document.getElementById('goToCreatorBtn').onclick = () => proceedToCreatorStudio(row);
+            document.getElementById('goToAiLogBtn').onclick = () => proceedToAiGeneratorLog(row);
 
             document.getElementById('detailModal').classList.remove('hidden');
             document.getElementById('detailModal').classList.add('flex');
         }
 
-        async function generatePrintableReport(row) {
+        async function generateItemPrintableReport(row) {
             const reportContainer = document.getElementById('printableReport');
             let promoName = row['Promo Name'] || '';
             let matchedProducts = [];
-
             if (currentTab === 'Promotion') {
                 try {
                     const res = await fetch(`${SCRIPT_URL}?sheet=Promotion products`);
                     const result = await res.json();
-                    const allProducts = result.data || [];
-                    matchedProducts = allProducts.filter(p => (p['Promo Name'] || '') === promoName);
+                    matchedProducts = (result.data || []).filter(p => (p['Promo Name'] || '') === promoName);
                 } catch (err) {}
             }
 
@@ -668,28 +700,14 @@
                 let val = row[h] !== undefined ? row[h] : '-';
                 let lowerH = h.toLowerCase();
                 let thaiLbl = getThaiLabel(h);
-
-                if (lowerH.includes('date') || lowerH.includes('timestamp')) {
-                    val = formatShortDate(val);
-                }
+                if (lowerH.includes('date') || lowerH.includes('timestamp')) val = formatShortDate(val);
 
                 if (lowerH.includes('image') && val) {
-                    htmlContent += `
-                        <tr style="border-bottom: 1px solid #ddd;">
-                            <td style="padding: 10px; font-weight: bold; width: 30%; vertical-align: top; font-size: 13px;">${thaiLbl}</td>
-                            <td style="padding: 10px; vertical-align: top;"><img src="${val}" style="max-width: 120px; max-height: 120px; border-radius: 6px; border: 1px solid #ccc;"></td>
-                        </tr>
-                    `;
+                    htmlContent += `<tr style="border-bottom: 1px solid #ddd;"><td style="padding: 10px; font-weight: bold; width: 30%; vertical-align: top; font-size: 13px;">${thaiLbl}</td><td style="padding: 10px; vertical-align: top;"><img src="${val}" style="max-width: 120px; max-height: 120px; border-radius: 6px; border: 1px solid #ccc;"></td></tr>`;
                 } else {
-                    htmlContent += `
-                        <tr style="border-bottom: 1px solid #ddd;">
-                            <td style="padding: 10px; font-weight: bold; width: 30%; font-size: 13px;">${thaiLbl}</td>
-                            <td style="padding: 10px; font-size: 13px; word-break: break-all;">${val}</td>
-                        </tr>
-                    `;
+                    htmlContent += `<tr style="border-bottom: 1px solid #ddd;"><td style="padding: 10px; font-weight: bold; width: 30%; font-size: 13px;">${thaiLbl}</td><td style="padding: 10px; font-size: 13px; word-break: break-all;">${val}</td></tr>`;
                 }
             });
-
             htmlContent += `</table>`;
 
             if (currentTab === 'Promotion' && matchedProducts.length > 0) {
@@ -717,23 +735,13 @@
                         </tr>
                     `;
                 });
-                htmlContent += `
-                            </tbody>
-                        </table>
-                    </div>
-                `;
+                htmlContent += `</tbody></table></div>`;
             }
 
             htmlContent += `
                     <div style="display: flex; justify-content: space-between; margin-top: 50px; font-size: 13px; page-break-inside: avoid;">
-                        <div style="text-align: center;">
-                            <p>ลงชื่อ......................................................</p>
-                            <p>(ผู้จัดทำรายงาน)</p>
-                        </div>
-                        <div style="text-align: center;">
-                            <p>ลงชื่อ......................................................</p>
-                            <p>(ผู้จัดการอนุมัติ / ตรวจสอบ)</p>
-                        </div>
+                        <div style="text-align: center;"><p>ลงชื่อ......................................................</p><p>(ผู้จัดทำรายงาน)</p></div>
+                        <div style="text-align: center;"><p>ลงชื่อ......................................................</p><p>(ผู้จัดการอนุมัติ / ตรวจสอบ)</p></div>
                     </div>
                 </div>
             `;
@@ -741,6 +749,7 @@
             window.print();
         }
 
+        // ฟังก์ชันสำหรับพิมพ์รายการสรุปของหน้าปัจจุบัน (ตาราง/ลิสต์ที่กำลังเปิดอยู่)
         function printSummaryReport() {
             const selectedMonth = document.getElementById('monthFilterSelect')?.value || '';
             const query = document.getElementById('tableSearchInput')?.value.toLowerCase() || '';
@@ -782,10 +791,7 @@
                 tableHeaders.forEach(h => {
                     let val = row[h] !== undefined ? row[h] : '-';
                     let lowerH = h.toLowerCase();
-
-                    if (lowerH.includes('date') || lowerH.includes('timestamp')) {
-                        val = formatShortDate(val);
-                    }
+                    if (lowerH.includes('date') || lowerH.includes('timestamp')) val = formatShortDate(val);
 
                     if (lowerH.includes('image') && val) {
                         htmlContent += `<td style="padding: 8px; border: 1px solid #cbd5e1; font-size: 12px;"><img src="${val}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"></td>`;
@@ -800,14 +806,8 @@
                     </tbody>
                 </table>
                 <div style="display: flex; justify-content: space-between; margin-top: 50px; font-size: 14px; page-break-inside: avoid;">
-                    <div style="text-align: center;">
-                        <p>ลงชื่อ......................................................</p>
-                        <p>(ผู้จัดทำรายงาน)</p>
-                    </div>
-                    <div style="text-align: center;">
-                        <p>ลงชื่อ......................................................</p>
-                        <p>(ผู้จัดการอนุมัติ / ตรวจสอบ)</p>
-                    </div>
+                    <div style="text-align: center;"><p>ลงชื่อ......................................................</p><p>(ผู้จัดทำรายงาน)</p></div>
+                    <div style="text-align: center;"><p>ลงชื่อ......................................................</p><p>(ผู้จัดการอนุมัติ / ตรวจสอบ)</p></div>
                 </div>
             </div>
             `;
@@ -926,37 +926,32 @@
             try {
                 const res = await fetch(`${SCRIPT_URL}?sheet=Promotion`);
                 const result = await res.json();
-                if (result.data) {
-                    promotionListCache = result.data;
-                }
-            } catch (err) {
-                promotionListCache = [];
-            }
+                if (result.data) promotionListCache = result.data;
+            } catch (err) { promotionListCache = []; }
         }
 
         function onPromoNameChange(selectElement) {
             const selectedName = selectElement.value;
             const matchedPromo = promotionListCache.find(p => (p['Promo Name'] || '') === selectedName);
-
             if (matchedPromo) {
                 tableHeaders.forEach(h => {
-                    let lowerH = h.toLowerCase();
                     let fieldInput = document.getElementById(`field_${h}`);
-                    if (fieldInput) {
-                        if (lowerH.includes('condition') && matchedPromo[h] !== undefined) {
-                            fieldInput.value = matchedPromo[h];
-                        }
-                        if ((lowerH.includes('start date') || lowerH.includes('end date') || lowerH.includes('date')) && matchedPromo[h] !== undefined) {
+                    if (fieldInput && matchedPromo[h] !== undefined) {
+                        let val = matchedPromo[h];
+                        let lowerH = h.toLowerCase();
+                        if ((lowerH.includes('date') || lowerH.includes('timestamp')) && val) {
                             try {
-                                const d = new Date(matchedPromo[h]);
+                                const d = new Date(val);
                                 if (!isNaN(d.getTime())) {
                                     fieldInput.value = d.toISOString().slice(0, 16);
                                 } else {
-                                    fieldInput.value = matchedPromo[h];
+                                    fieldInput.value = val;
                                 }
                             } catch (e) {
-                                fieldInput.value = matchedPromo[h];
+                                fieldInput.value = val;
                             }
+                        } else {
+                            fieldInput.value = val;
                         }
                     }
                 });
@@ -971,9 +966,7 @@
         async function openAddModal() {
             editingRowIndex = null;
             document.getElementById('modalTitle').innerText = "➕ เพิ่มข้อมูลใหม่ (" + currentTab + ")";
-            if (currentTab === 'Promotion products') {
-                await fetchPromotionList();
-            }
+            if (currentTab === 'Promotion products') await fetchPromotionList();
             buildFormFields({});
             document.getElementById('dataModal').classList.remove('hidden');
             document.getElementById('dataModal').classList.add('flex');
@@ -982,9 +975,7 @@
         async function openEditModal(dataIndex) {
             editingRowIndex = tableData[dataIndex].rowIndex;
             document.getElementById('modalTitle').innerText = "✏️ แก้ไขข้อมูล";
-            if (currentTab === 'Promotion products') {
-                await fetchPromotionList();
-            }
+            if (currentTab === 'Promotion products') await fetchPromotionList();
             buildFormFields(tableData[dataIndex]);
             document.getElementById('dataModal').classList.remove('hidden');
             document.getElementById('dataModal').classList.add('flex');
@@ -1002,12 +993,11 @@
         }
 
         function updateGeneratedPrompt() {
-            const mode = document.getElementById('prompt_mode')?.value || 'สร้างวิดีโอ (Video Generation)';
+            const mode = document.getElementById('prompt_mode')?.value || '';
             const ctx = document.getElementById('prompt_context')?.value || '';
             const act = document.getElementById('prompt_action')?.value || '';
             const ent = document.getElementById('prompt_entity')?.value || '';
             const del = document.getElementById('prompt_delivery')?.value || '';
-
             const combined = `[Mode: ${mode}] [Context: ${ctx}] [Action: ${act}] [Entity: ${ent}] [Delivery: ${del}]`;
             const genPromptField = document.getElementById('real_generated_prompt_field');
             if (genPromptField) {
@@ -1019,18 +1009,13 @@
         function copyPromptText(elementId) {
             const el = document.getElementById(elementId);
             if (el) {
-                navigator.clipboard.writeText(el.value).then(() => {
-                    alert('📋 คัดลอก Prompt เรียบร้อยแล้ว!');
-                }).catch(err => {
-                    alert('ไม่สามารถคัดลอกได้: ' + err);
-                });
+                navigator.clipboard.writeText(el.value).then(() => alert('📋 คัดลอกสำเร็จ!'));
             }
         }
 
         function buildFormFields(data) {
             const container = document.getElementById('formFields');
             let html = '';
-
             let uniquePromoNames = [...new Set(promotionListCache.map(p => p['Promo Name'] || '').filter(Boolean))];
 
             tableHeaders.forEach(h => {
@@ -1043,10 +1028,7 @@
                         let selected = (val === promo) ? 'selected' : '';
                         optionsHtml += `<option value="${promo}" ${selected}>${promo}</option>`;
                     });
-                    html += `<div>
-                        <label class="block text-xs font-semibold text-zinc-400 mb-1">${getThaiLabel(h)}</label>
-                        <select id="field_${h}" onchange="onPromoNameChange(this)" class="w-full px-4 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-sm text-white focus:outline-none focus:border-zinc-400">${optionsHtml}</select>
-                    </div>`;
+                    html += `<div><label class="block text-xs font-semibold text-zinc-400 mb-1">${getThaiLabel(h)}</label><select id="field_${h}" onchange="onPromoNameChange(this)" class="w-full px-4 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-sm text-white">${optionsHtml}</select></div>`;
                     return;
                 }
 
@@ -1106,12 +1088,7 @@
                 let dropdownOptions = getDropdownOptions(h);
                 
                 if (lowerH.includes('image')) {
-                    html += `<div>
-                        <label class="block text-xs font-semibold text-zinc-400 mb-1">${thaiLabel} (เลือกรูปภาพ)</label>
-                        <input type="file" id="field_${h}" accept="image/*" class="w-full text-sm text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-zinc-200 hover:file:bg-zinc-700 border border-zinc-700 rounded-xl p-1 bg-zinc-950">
-                        <input type="hidden" id="val_${h}" value="${val}">
-                        ${val ? `<div class="mt-2 flex items-center gap-2"><img src="${val}" class="w-16 h-16 object-cover rounded-xl border border-zinc-700"><span class="text-xs text-zinc-500">มีรูปภาพเดิมอยู่แล้ว</span></div>` : ''}
-                    </div>`;
+                    html += `<div><label class="block text-xs font-semibold text-zinc-400 mb-1">${thaiLabel} (เลือกรูปภาพ)</label><input type="file" id="field_${h}" accept="image/*" class="w-full text-sm text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-zinc-800 file:text-zinc-200 border border-zinc-700 p-1 bg-zinc-950"><input type="hidden" id="val_${h}" value="${val}">${val ? `<div class="mt-2"><img src="${val}" class="w-16 h-16 object-cover rounded-xl border border-zinc-700"></div>` : ''}</div>`;
                 } else if (lowerH.includes('date') || lowerH.includes('timestamp')) {
                     let formattedDate = '';
                     if (val) {
@@ -1119,43 +1096,23 @@
                             const d = new Date(val);
                             if (!isNaN(d.getTime())) formattedDate = d.toISOString().slice(0, 16);
                         } catch (e) { formattedDate = val; }
-                    } else if (currentTab === 'AI Generator Log' && editingRowIndex === null && lowerH.includes('timestamp')) {
-                        formattedDate = new Date().toISOString().slice(0, 16);
                     }
-                    html += `<div>
-                        <label class="block text-xs font-semibold text-zinc-400 mb-1">${thaiLabel}</label>
-                        <input type="datetime-local" id="field_${h}" value="${formattedDate}" class="w-full px-4 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-sm text-white focus:outline-none focus:border-zinc-400">
-                    </div>`;
+                    html += `<div><label class="block text-xs font-semibold text-zinc-400 mb-1">${thaiLabel}</label><input type="datetime-local" id="field_${h}" value="${formattedDate}" class="w-full px-4 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-sm text-white"></div>`;
                 } else if (dropdownOptions) {
                     let optionsHtml = `<option value="">-- กรุณาเลือก --</option>`;
                     dropdownOptions.forEach(opt => {
                         let selected = (val === opt) ? 'selected' : '';
                         optionsHtml += `<option value="${opt}" ${selected}>${opt}</option>`;
                     });
-                    html += `<div>
-                        <label class="block text-xs font-semibold text-zinc-400 mb-1">${thaiLabel}</label>
-                        <select id="field_${h}" class="w-full px-4 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-sm text-white focus:outline-none focus:border-zinc-400">${optionsHtml}</select>
-                    </div>`;
+                    html += `<div><label class="block text-xs font-semibold text-zinc-400 mb-1">${thaiLabel}</label><select id="field_${h}" class="w-full px-4 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-sm text-white">${optionsHtml}</select></div>`;
                 } else if (lowerH.includes('prompt')) {
-                    html += `<div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="block text-xs font-semibold text-zinc-400">${thaiLabel}</label>
-                            <button type="button" onclick="copyPromptText('field_${h}')" class="text-xs text-blue-400 hover:text-blue-300 font-medium">📋 คัดลอก Prompt</button>
-                        </div>
-                        <textarea id="field_${h}" rows="3" oninput="autoResizeTextarea(this)" class="w-full px-4 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-sm text-white focus:outline-none focus:border-zinc-400">${val}</textarea>
-                    </div>`;
+                    html += `<div><div class="flex justify-between items-center mb-1"><label class="block text-xs font-semibold text-zinc-400">${thaiLabel}</label><button type="button" onclick="copyPromptText('field_${h}')" class="text-xs text-blue-400 font-medium">📋 คัดลอก</button></div><textarea id="field_${h}" rows="3" oninput="autoResizeTextarea(this)" class="w-full px-4 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-sm text-white">${val}</textarea></div>`;
                 } else {
-                    html += `<div>
-                        <label class="block text-xs font-semibold text-zinc-400 mb-1">${thaiLabel}</label>
-                        <input type="text" id="field_${h}" value="${val}" class="w-full px-4 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-sm text-white focus:outline-none focus:border-zinc-400">
-                    </div>`;
+                    html += `<div><label class="block text-xs font-semibold text-zinc-400 mb-1">${thaiLabel}</label><input type="text" id="field_${h}" value="${val}" class="w-full px-4 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-sm text-white"></div>`;
                 }
             });
             container.innerHTML = html;
-
-            setTimeout(() => {
-                container.querySelectorAll('textarea').forEach(ta => autoResizeTextarea(ta));
-            }, 50);
+            setTimeout(() => { container.querySelectorAll('textarea').forEach(ta => autoResizeTextarea(ta)); }, 50);
         }
 
         function compressAndResizeImage(file) {
@@ -1168,11 +1125,8 @@
                     img.onload = () => {
                         let width = img.width, height = img.height;
                         const MAX_SIZE = 300;
-                        if (width > height) {
-                            if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
-                        } else {
-                            if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
-                        }
+                        if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } }
+                        else { if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } }
                         const canvas = document.createElement('canvas');
                         canvas.width = width; canvas.height = height;
                         const ctx = canvas.getContext('2d');
