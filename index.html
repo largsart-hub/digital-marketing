@@ -155,7 +155,8 @@
                 'Product code': 'รหัสสินค้า (Product Code)',
                 'Product Name': 'ชื่อสินค้า (Product Name)',
                 'Regular price': 'ราคาปกติ (Regular Price)',
-                'discount%': 'ส่วนลด (%) (Discount%)',
+                'Quantity': 'จำนวนสินค้า (Quantity)',
+                'discount%': 'จำนวนสินค้า (Quantity)',
                 'promotion price': 'ราคาโปรโมชั่น (Promotion Price)',
                 'Timestamp': 'เวลาที่บันทึก (Timestamp)',
                 'Media Type': 'ประเภทสื่อ (Media Type)',
@@ -645,7 +646,7 @@
                         } else {
                             let prodHtml = `<div class="space-y-2 max-h-60 overflow-y-auto pr-1">`;
                             matchedProducts.forEach(prod => {
-                                prodHtml += `
+                                  prodHtml += `
                                     <div class="bg-zinc-950 p-3 rounded-xl border border-zinc-800 flex items-center justify-between gap-3">
                                         <div class="flex items-center gap-3">
                                             ${prod['Images'] ? `<img src="${prod['Images']}" class="w-12 h-12 object-cover rounded-lg border border-zinc-700 cursor-pointer" onclick="openImageModal('${prod['Images']}')">` : '<div class="w-12 h-12 bg-zinc-900 rounded-lg flex items-center justify-center text-zinc-600 text-xs">ไม่มีรูป</div>'}
@@ -654,26 +655,25 @@
                                                 <p class="text-[11px] text-zinc-400 mt-0.5">ราคาปกติ: ${prod['Regular price'] || '-'} | ราคาโปร: <span class="text-emerald-400 font-bold">${prod['promotion price'] || '-'}</span></p>
                                             </div>
                                         </div>
-                                    </div>
-                                `;
-                            });
-                            prodHtml += `</div>`;
-                            prodContainer.innerHTML = prodHtml;
-                        }
+                                </div>
+                            `;
+                          });
+                          prodHtml += `</div>`;
+                          prodContainer.innerHTML = prodHtml;
                     }
                 } catch (err) {
                     const prodContainer = document.getElementById('promoProductsContainer');
                     if (prodContainer) prodContainer.innerHTML = `<p class="text-rose-400 p-2">ไม่สามารถโหลดรายการสินค้าได้</p>`;
                 }
-            }
+          }
 
-            document.getElementById('printReportBtn').onclick = () => generateItemPrintableReport(row);
-            document.getElementById('detailEditBtn').onclick = () => { closeDetailModal(); openEditModal(dataIndex); };
-            document.getElementById('goToCreatorBtn').onclick = () => proceedToCreatorStudio(row);
-            document.getElementById('goToAiLogBtn').onclick = () => proceedToAiGeneratorLog(row);
+          document.getElementById('printReportBtn').onclick = () => generateItemPrintableReport(row);
+          document.getElementById('detailEditBtn').onclick = () => { closeDetailModal(); openEditModal(dataIndex); };
+          document.getElementById('goToCreatorBtn').onclick = () => proceedToCreatorStudio(row);
+          document.getElementById('goToAiLogBtn').onclick = () => proceedToAiGeneratorLog(row);
 
-            document.getElementById('detailModal').classList.remove('hidden');
-            document.getElementById('detailModal').classList.add('flex');
+          document.getElementById('detailModal').classList.remove('hidden');
+          document.getElementById('detailModal').classList.add('flex');
         }
 
         async function generateItemPrintableReport(row) {
@@ -686,7 +686,7 @@
                     const result = await res.json();
                     matchedProducts = (result.data || []).filter(p => (p['Promo Name'] || '') === promoName);
                 } catch (err) {}
-            }
+        }
 
             let htmlContent = `
                 <div style="font-family: 'Sarabun', sans-serif; color: #000; padding: 40px; max-width: 800px; margin: 0 auto; background: #fff;">
@@ -694,7 +694,7 @@
                         <h2 style="font-size: 20px; font-weight: bold; margin: 0;">รายงานสรุปข้อมูล: ${currentTab}</h2>
                     </div>
                     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-            `;
+          `;
 
             tableHeaders.forEach(h => {
                 let val = row[h] !== undefined ? row[h] : '-';
@@ -779,7 +779,7 @@
                     <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
                         <thead>
                             <tr style="background-color: #f1f5f9; border-bottom: 2px solid #333;">
-            `;
+      `;
 
             tableHeaders.forEach(h => {
                 htmlContent += `<th style="padding: 10px; border: 1px solid #cbd5e1; font-size: 12px; text-align: left;">${getThaiLabel(h)}</th>`;
@@ -814,7 +814,7 @@
 
             reportContainer.innerHTML = htmlContent;
             window.print();
-        }
+      }
 
         async function proceedToCreatorStudio(row) {
             closeDetailModal();
@@ -847,7 +847,7 @@
                 const result = await response.json();
                 tableHeaders = result.headers || [];
                 tableData = result.data || [];
-                
+                 
                 openAddModal();
                 setTimeout(() => {
                     const taskInput = document.getElementById(`field_${tableHeaders.find(h => h.toLowerCase().includes('task id')) || 'Task ID'}`);
@@ -858,7 +858,7 @@
             } catch (err) {
                 fetchData();
             }
-        }
+      }
 
         async function proceedToAiGeneratorLog(row) {
             closeDetailModal();
@@ -881,7 +881,7 @@
                 const result = await response.json();
                 tableHeaders = result.headers || [];
                 tableData = result.data || [];
-                
+                 
                 openAddModal();
                 setTimeout(() => {
                     const taskInput = document.getElementById(`field_${tableHeaders.find(h => h.toLowerCase().includes('task id')) || 'Task ID'}`);
@@ -920,7 +920,7 @@
             } catch (err) {
                 fetchData();
             }
-        }
+      }
 
         async function fetchPromotionList() {
             try {
@@ -928,7 +928,7 @@
                 const result = await res.json();
                 if (result.data) promotionListCache = result.data;
             } catch (err) { promotionListCache = []; }
-        }
+      }
 
         function onPromoNameChange(selectElement) {
             const selectedName = selectElement.value;
@@ -956,12 +956,12 @@
                     }
                 });
             }
-        }
+      }
 
         function closeDetailModal() {
             document.getElementById('detailModal').classList.remove('flex');
             document.getElementById('detailModal').classList.add('hidden');
-        }
+      }
 
         async function openAddModal() {
             editingRowIndex = null;
@@ -970,7 +970,7 @@
             buildFormFields({});
             document.getElementById('dataModal').classList.remove('hidden');
             document.getElementById('dataModal').classList.add('flex');
-        }
+      }
 
         async function openEditModal(dataIndex) {
             editingRowIndex = tableData[dataIndex].rowIndex;
@@ -979,18 +979,18 @@
             buildFormFields(tableData[dataIndex]);
             document.getElementById('dataModal').classList.remove('hidden');
             document.getElementById('dataModal').classList.add('flex');
-        }
+      }
 
         function closeModal() {
             document.getElementById('dataModal').classList.remove('flex');
             document.getElementById('dataModal').classList.add('hidden');
-        }
+      }
 
         function autoResizeTextarea(el) {
             if (!el) return;
             el.style.height = 'auto';
             el.style.height = (el.scrollHeight + 4) + 'px';
-        }
+      }
 
         function updateGeneratedPrompt() {
             const mode = document.getElementById('prompt_mode')?.value || '';
@@ -1004,14 +1004,14 @@
                 genPromptField.value = combined;
                 autoResizeTextarea(genPromptField);
             }
-        }
+      }
 
         function copyPromptText(elementId) {
             const el = document.getElementById(elementId);
             if (el) {
                 navigator.clipboard.writeText(el.value).then(() => alert('📋 คัดลอกสำเร็จ!'));
             }
-        }
+      }
 
         function buildFormFields(data) {
             const container = document.getElementById('formFields');
@@ -1086,7 +1086,7 @@
 
                 let thaiLabel = getThaiLabel(h);
                 let dropdownOptions = getDropdownOptions(h);
-                
+                 
                 if (lowerH.includes('image')) {
                     html += `<div><label class="block text-xs font-semibold text-zinc-400 mb-1">${thaiLabel} (เลือกรูปภาพ)</label><input type="file" id="field_${h}" accept="image/*" class="w-full text-sm text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-zinc-800 file:text-zinc-200 border border-zinc-700 p-1 bg-zinc-950"><input type="hidden" id="val_${h}" value="${val}">${val ? `<div class="mt-2"><img src="${val}" class="w-16 h-16 object-cover rounded-xl border border-zinc-700"></div>` : ''}</div>`;
                 } else if (lowerH.includes('date') || lowerH.includes('timestamp')) {
@@ -1110,117 +1110,117 @@
                 } else {
                     html += `<div><label class="block text-xs font-semibold text-zinc-400 mb-1">${thaiLabel}</label><input type="text" id="field_${h}" value="${val}" class="w-full px-4 py-2 bg-zinc-950 border border-zinc-700 rounded-xl text-sm text-white"></div>`;
                 }
-            });
-            container.innerHTML = html;
-            setTimeout(() => { container.querySelectorAll('textarea').forEach(ta => autoResizeTextarea(ta)); }, 50);
-        }
+        });
+        container.innerHTML = html;
+        setTimeout(() => { container.querySelectorAll('textarea').forEach(ta => autoResizeTextarea(ta)); }, 50);
+    }
 
-        function compressAndResizeImage(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = event => {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = () => {
-                        let width = img.width, height = img.height;
-                        const MAX_SIZE = 300;
-                        if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } }
-                        else { if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } }
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width; canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.5));
-                    };
-                    img.onerror = error => reject(error);
+    function compressAndResizeImage(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = event => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    let width = img.width, height = img.height;
+                    const MAX_SIZE = 300;
+                    if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } }
+                    else { if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.5));
                 };
-                reader.onerror = error => reject(error);
-            });
-        }
+                img.onerror = error => reject(error);
+            };
+            reader.onerror = error => reject(error);
+        });
+    }
 
-        async function handleFormSubmit(event) {
-            event.preventDefault();
-            const saveBtn = document.getElementById('saveBtn');
-            saveBtn.innerText = "กำลังบันทึก...";
-            saveBtn.disabled = true;
+    async function handleFormSubmit(event) {
+        event.preventDefault();
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.innerText = "กำลังบันทึก...";
+        saveBtn.disabled = true;
 
-            try {
-                const genPromptField = document.getElementById('real_generated_prompt_field');
-                const mainField = tableHeaders.find(h => h.toLowerCase().includes('generated prompt'));
-                if (genPromptField && mainField) {
-                    const hiddenMain = document.getElementById(`field_${mainField}`);
-                    if (hiddenMain) hiddenMain.value = genPromptField.value;
-                }
+        try {
+            const genPromptField = document.getElementById('real_generated_prompt_field');
+            const mainField = tableHeaders.find(h => h.toLowerCase().includes('generated prompt'));
+            if (genPromptField && mainField) {
+                const hiddenMain = document.getElementById(`field_${mainField}`);
+                if (hiddenMain) hiddenMain.value = genPromptField.value;
+            }
 
-                const rowData = {};
-                for (let h of tableHeaders) {
-                    if (h.toLowerCase().includes('image')) {
-                        const fileInput = document.getElementById(`field_${h}`);
-                        const hiddenVal = document.getElementById(`val_${h}`).value;
-                        if (fileInput && fileInput.files.length > 0) {
-                            rowData[h] = await compressAndResizeImage(fileInput.files[0]);
-                        } else {
-                            rowData[h] = hiddenVal;
-                        }
+            const rowData = {};
+            for (let h of tableHeaders) {
+                if (h.toLowerCase().includes('image')) {
+                    const fileInput = document.getElementById(`field_${h}`);
+                    const hiddenVal = document.getElementById(`val_${h}`).value;
+                    if (fileInput && fileInput.files.length > 0) {
+                        rowData[h] = await compressAndResizeImage(fileInput.files[0]);
                     } else {
-                        const el = document.getElementById(`field_${h}`);
-                        rowData[h] = el ? el.value : '';
+                        rowData[h] = hiddenVal;
                     }
-                }
-
-                const action = editingRowIndex === null ? 'add' : 'update';
-                const payload = { action: action, sheet: currentTab, row: rowData, rowIndex: editingRowIndex };
-
-                const res = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
-                const result = await res.json();
-                
-                if (result.status === 'success') {
-                    closeModal();
-                    fetchData();
                 } else {
-                    alert('เกิดข้อผิดพลาด: ' + result.message);
+                    const el = document.getElementById(`field_${h}`);
+                    rowData[h] = el ? el.value : '';
                 }
-            } catch (err) {
-                alert('ไม่สามารถบันทึกข้อมูลได้: ' + err.message);
-            } finally {
-                saveBtn.innerText = "บันทึกข้อมูล";
-                saveBtn.disabled = false;
             }
-        }
 
-        async function deleteRow(rowIndex) {
-            if (!confirm('คุณต้องการลบข้อมูลแถวนี้ใช่หรือไม่?')) return;
-            try {
-                const res = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'delete', sheet: currentTab, rowIndex: rowIndex })
-                });
-                const result = await res.json();
-                if (result.status === 'success') fetchData();
-                else alert('ลบไม่สำเร็จ: ' + result.message);
-            } catch (err) {
-                alert('เกิดข้อผิดพลาด: ' + err.message);
+            const action = editingRowIndex === null ? 'add' : 'update';
+            const payload = { action: action, sheet: currentTab, row: rowData, rowIndex: editingRowIndex };
+
+            const res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+            
+            if (result.status === 'success') {
+                closeModal();
+                fetchData();
+            } else {
+                alert('เกิดข้อผิดพลาด: ' + result.message);
             }
+        } catch (err) {
+            alert('ไม่สามารถบันทึกข้อมูลได้: ' + err.message);
+        } finally {
+            saveBtn.innerText = "บันทึกข้อมูล";
+            saveBtn.disabled = false;
         }
+    }
 
-        function openImageModal(url) {
-            document.getElementById('modalImage').src = url;
-            document.getElementById('imageModal').classList.remove('hidden');
-            document.getElementById('imageModal').classList.add('flex');
+    async function deleteRow(rowIndex) {
+        if (!confirm('คุณต้องการลบข้อมูลแถวนี้ใช่หรือไม่?')) return;
+        try {
+            const res = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'delete', sheet: currentTab, rowIndex: rowIndex })
+            });
+            const result = await res.json();
+            if (result.status === 'success') fetchData();
+            else alert('ลบไม่สำเร็จ: ' + result.message);
+        } catch (err) {
+            alert('เกิดข้อผิดพลาด: ' + err.message);
         }
+    }
 
-        function closeImageModal() {
-            document.getElementById('imageModal').classList.remove('flex');
-            document.getElementById('imageModal').classList.add('hidden');
-        }
+    function openImageModal(url) {
+        document.getElementById('modalImage').src = url;
+        document.getElementById('imageModal').classList.remove('hidden');
+        document.getElementById('imageModal').classList.add('flex');
+    }
 
-        fetchData();
-    </script>
+    function closeImageModal() {
+        document.getElementById('modalImage').classList.remove('flex');
+        document.getElementById('imageModal').classList.add('hidden');
+    }
+
+    fetchData();
+  </script>
 </body>
 </html>
