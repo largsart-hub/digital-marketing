@@ -269,7 +269,6 @@
 
             container.innerHTML = `
                 <div class="space-y-6">
-                    <!-- ปุ่มพิมพ์หน้า Dashboard -->
                     <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 flex items-center justify-between">
                         <div class="text-xs text-zinc-400">
                             📊 ภาพรวมสถิติระบบปฏิบัติการการตลาดดิจิทัล
@@ -461,79 +460,128 @@
             let html = '';
             rows.forEach((row) => {
                 let originalIdx = tableData.indexOf(row);
-                let titleVal = '';
-                let idVal = '';
-                let statusVal = '';
-                let imageVal = '';
 
-                tableHeaders.forEach(h => {
-                    let val = row[h] !== undefined ? row[h] : '';
-                    let lowerH = h.toLowerCase();
-                    if (lowerH.includes('title') || lowerH.includes('name') || lowerH.includes('promo name')) {
-                        if (!titleVal) titleVal = val;
-                    }
-                    if (lowerH.includes('id') || lowerH.includes('code')) {
-                        if (!idVal) idVal = val;
-                    }
-                    if (lowerH.includes('status')) {
-                        if (!statusVal) statusVal = val;
-                    }
-                    if (lowerH.includes('image') && val && !imageVal) {
-                        imageVal = val;
-                    }
-                });
+                // หากเป็นหน้า Promotion products จัดระเบียบการแสดงผลข้อมูลสำคัญให้เด่นชัด
+                if (currentTab === 'Promotion products') {
+                    let prodName = row['Product Name'] || '-';
+                    let prodCode = row['Product code'] || '-';
+                    let regPrice = formatNumber(row['Regular price'] || '0');
+                    let promoPrice = formatNumber(row['promotion price'] || '0');
+                    let qty = formatNumber(row['Quantity'] || '0');
+                    let imageVal = row['Images'] || '';
+                    let noteVal = row['note'] || '';
 
-                if (!titleVal) {
-                    const firstKey = tableHeaders.find(h => !h.toLowerCase().includes('id'));
-                    titleVal = firstKey ? row[firstKey] : 'รายการ';
-                }
-
-                html += `
-                    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 shadow-md hover:border-zinc-700 transition cursor-pointer flex flex-col gap-3" onclick="openDetailModal(${originalIdx})">
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="flex items-center gap-3">
-                                ${imageVal ? `<img src="${imageVal}" class="w-12 h-12 object-cover rounded-xl border border-zinc-700 shrink-0">` : ''}
-                                <div>
-                                    ${idVal ? `<span class="text-[10px] text-zinc-500 font-mono">${idVal}</span>` : ''}
-                                    <h4 class="text-sm font-bold text-white line-clamp-1">${titleVal}</h4>
+                    html += `
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 shadow-md hover:border-zinc-700 transition cursor-pointer flex flex-col gap-3" onclick="openDetailModal(${originalIdx})">
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="flex items-center gap-3.5 flex-1 min-w-0">
+                                    ${imageVal ? `<img src="${imageVal}" class="w-14 h-14 object-cover rounded-xl border border-zinc-700 shrink-0" onclick="event.stopPropagation(); openImageModal('${imageVal}')">` : '<div class="w-14 h-14 bg-zinc-950 rounded-xl border border-zinc-800 flex items-center justify-center text-zinc-600 text-xs shrink-0">ไม่มีรูป</div>'}
+                                    <div class="min-w-0 flex-1">
+                                        <span class="text-xs text-blue-400 font-mono font-semibold">${prodCode}</span>
+                                        <h4 class="text-sm font-bold text-white truncate">${prodName}</h4>
+                                        ${row['Promo Name'] ? `<span class="inline-block mt-1 px-2 py-0.5 bg-zinc-800 text-zinc-300 rounded-md text-[11px] font-medium">🏷️ ${row['Promo Name']}</span>` : ''}
+                                    </div>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <span class="block text-[10px] text-zinc-500 uppercase">ราคาโปรโมชั่น</span>
+                                    <span class="text-base font-bold text-emerald-400">${promoPrice} ฿</span>
+                                    ${regPrice && regPrice !== '0' ? `<span class="block text-xs text-zinc-500 line-through">${regPrice} ฿</span>` : ''}
                                 </div>
                             </div>
-                            <div class="flex items-center gap-2 shrink-0">
-                                ${statusVal ? `<span class="px-2 py-1 bg-zinc-800 text-zinc-300 rounded-lg text-[10px] font-medium">${statusVal}</span>` : ''}
+
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-3 border-t border-zinc-800/80 text-xs text-zinc-400 items-center">
+                                <div>
+                                    <span class="text-zinc-600 block text-[10px]">จำนวนสต็อก (Quantity)</span>
+                                    <span class="text-zinc-200 font-semibold">${qty} ชิ้น</span>
+                                </div>
+                                <div class="col-span-2">
+                                    <span class="text-zinc-600 block text-[10px]">หมายเหตุ / โน๊ต (Note)</span>
+                                    <span class="text-zinc-300 truncate block">${noteVal || '-'}</span>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-zinc-800/60 text-xs text-zinc-400">
-                `;
-
-                let count = 0;
-                tableHeaders.forEach(h => {
-                    let lowerH = h.toLowerCase();
-                    if (count < 3 && !lowerH.includes('image') && !lowerH.includes('title') && !lowerH.includes('name') && !lowerH.includes('id')) {
-                        let val = row[h] !== undefined ? row[h] : '';
-                        if (lowerH.includes('date') || lowerH.includes('timestamp')) {
-                            val = formatShortDate(val);
-                        } else if (lowerH.includes('price') || lowerH.includes('quantity')) {
-                            val = formatNumber(val);
-                        }
-                        if (val) {
-                            count++;
-                            html += `<div><span class="text-zinc-600 block text-[10px]">${getThaiLabel(h)}</span><span class="text-zinc-300 truncate block">${val}</span></div>`;
-                        }
-                    }
-                });
-
-                html += `
-                        </div>
-
-                        ${currentTab !== 'Dashboard' ? `
                             <div class="flex justify-end gap-2 pt-2 border-t border-zinc-800/40" onclick="event.stopPropagation()">
                                 <button onclick="openEditModal(${originalIdx})" class="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-medium transition">แก้ไข</button>
                                 <button onclick="deleteRow(${row.rowIndex})" class="px-3 py-1 bg-zinc-800 hover:bg-rose-950 text-zinc-200 hover:text-rose-400 rounded-lg text-xs font-medium transition">ลบ</button>
                             </div>
-                        ` : ''}
-                    </div>
-                `;
+                        </div>
+                    `;
+                } else {
+                    // รูปแบบสำหรับแท็บอื่นๆ ทั่วไป
+                    let titleVal = '';
+                    let idVal = '';
+                    let statusVal = '';
+                    let imageVal = '';
+
+                    tableHeaders.forEach(h => {
+                        let val = row[h] !== undefined ? row[h] : '';
+                        let lowerH = h.toLowerCase();
+                        if (lowerH.includes('title') || lowerH.includes('name') || lowerH.includes('promo name')) {
+                            if (!titleVal) titleVal = val;
+                        }
+                        if (lowerH.includes('id') || lowerH.includes('code')) {
+                            if (!idVal) idVal = val;
+                        }
+                        if (lowerH.includes('status')) {
+                            if (!statusVal) statusVal = val;
+                        }
+                        if (lowerH.includes('image') && val && !imageVal) {
+                            imageVal = val;
+                        }
+                    });
+
+                    if (!titleVal) {
+                        const firstKey = tableHeaders.find(h => !h.toLowerCase().includes('id'));
+                        titleVal = firstKey ? row[firstKey] : 'รายการ';
+                    }
+
+                    html += `
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 shadow-md hover:border-zinc-700 transition cursor-pointer flex flex-col gap-3" onclick="openDetailModal(${originalIdx})">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex items-center gap-3">
+                                    ${imageVal ? `<img src="${imageVal}" class="w-12 h-12 object-cover rounded-xl border border-zinc-700 shrink-0" onclick="event.stopPropagation(); openImageModal('${imageVal}')">` : ''}
+                                    <div>
+                                        ${idVal ? `<span class="text-[10px] text-zinc-500 font-mono">${idVal}</span>` : ''}
+                                        <h4 class="text-sm font-bold text-white line-clamp-1">${titleVal}</h4>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    ${statusVal ? `<span class="px-2 py-1 bg-zinc-800 text-zinc-300 rounded-lg text-[10px] font-medium">${statusVal}</span>` : ''}
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-zinc-800/60 text-xs text-zinc-400">
+                    `;
+
+                    let count = 0;
+                    tableHeaders.forEach(h => {
+                        let lowerH = h.toLowerCase();
+                        if (count < 3 && !lowerH.includes('image') && !lowerH.includes('title') && !lowerH.includes('name') && !lowerH.includes('id')) {
+                            let val = row[h] !== undefined ? row[h] : '';
+                            if (lowerH.includes('date') || lowerH.includes('timestamp')) {
+                                val = formatShortDate(val);
+                            } else if (lowerH.includes('price') || lowerH.includes('quantity')) {
+                                val = formatNumber(val);
+                            }
+                            if (val) {
+                                count++;
+                                html += `<div><span class="text-zinc-600 block text-[10px]">${getThaiLabel(h)}</span><span class="text-zinc-300 truncate block">${val}</span></div>`;
+                            }
+                        }
+                    });
+
+                    html += `
+                            </div>
+
+                            ${currentTab !== 'Dashboard' ? `
+                                <div class="flex justify-end gap-2 pt-2 border-t border-zinc-800/40" onclick="event.stopPropagation()">
+                                    <button onclick="openEditModal(${originalIdx})" class="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-xs font-medium transition">แก้ไข</button>
+                                    <button onclick="deleteRow(${row.rowIndex})" class="px-3 py-1 bg-zinc-800 hover:bg-rose-950 text-zinc-200 hover:text-rose-400 rounded-lg text-xs font-medium transition">ลบ</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }
             });
             return html;
         }
@@ -845,13 +893,13 @@
             });
 
             htmlContent += `
-                    </tbody>
-                </table>
-                <div style="display: flex; justify-content: space-between; margin-top: 50px; font-size: 14px; page-break-inside: avoid;">
-                    <div style="text-align: center;"><p>ลงชื่อ......................................................</p><p>(ผู้จัดทำรายงาน)</p></div>
-                    <div style="text-align: center;"><p>ลงชื่อ......................................................</p><p>(ผู้จัดการอนุมัติ / ตรวจสอบ)</p></div>
-                </div>
+                </tbody>
+            </table>
+            <div style="display: flex; justify-content: space-between; margin-top: 50px; font-size: 14px; page-break-inside: avoid;">
+                <div style="text-align: center;"><p>ลงชื่อ......................................................</p><p>(ผู้จัดทำรายงาน)</p></div>
+                <div style="text-align: center;"><p>ลงชื่อ......................................................</p><p>(ผู้จัดการอนุมัติ / ตรวจสอบ)</p></div>
             </div>
+        </div>
             `;
 
             reportContainer.innerHTML = htmlContent;
@@ -889,7 +937,7 @@
                 const result = await response.json();
                 tableHeaders = result.headers || [];
                 tableData = result.data || [];
-                 
+                
                 openAddModal();
                 setTimeout(() => {
                     const taskInput = document.getElementById(`field_${tableHeaders.find(h => h.toLowerCase().includes('task id')) || 'Task ID'}`);
@@ -923,7 +971,7 @@
                 const result = await response.json();
                 tableHeaders = result.headers || [];
                 tableData = result.data || [];
-                 
+                
                 openAddModal();
                 setTimeout(() => {
                     const taskInput = document.getElementById(`field_${tableHeaders.find(h => h.toLowerCase().includes('task id')) || 'Task ID'}`);
@@ -1089,7 +1137,7 @@
                     } else if (lowerH.includes('generated prompt')) {
                         html += `<div class="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-3">
                             <label class="block text-xs font-bold text-emerald-400 uppercase tracking-wider">✨ ฟอร์มสร้าง Prompt อัตโนมัติ</label>
-                             
+                            
                             <div>
                                 <label class="block text-[11px] text-zinc-400 mb-1">0. โหมด / ประเภทการสร้าง (Mode)</label>
                                 <select id="prompt_mode" onchange="updateGeneratedPrompt()" class="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-white">
@@ -1130,7 +1178,7 @@
 
                 let thaiLabel = getThaiLabel(h);
                 let dropdownOptions = getDropdownOptions(h);
-                 
+                
                 if (lowerH.includes('image')) {
                     html += `<div><label class="block text-xs font-semibold text-zinc-400 mb-1">${thaiLabel} (เลือกรูปภาพ)</label><input type="file" id="field_${h}" accept="image/*" class="w-full text-sm text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-zinc-800 file:text-zinc-200 border border-zinc-700 p-1 bg-zinc-950"><input type="hidden" id="val_${h}" value="${val}">${val ? `<div class="mt-2"><img src="${val}" class="w-16 h-16 object-cover rounded-xl border border-zinc-700"></div>` : ''}</div>`;
                 } else if (lowerH.includes('date') || lowerH.includes('timestamp')) {
@@ -1232,7 +1280,7 @@
                     body: JSON.stringify(payload)
                 });
                 const result = await res.json();
-                 
+                
                 if (result.status === 'success') {
                     closeModal();
                     fetchData();
